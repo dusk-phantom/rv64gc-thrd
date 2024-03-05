@@ -1,3 +1,7 @@
 #include "my_thrd.h"
 
-// TODO
+#include <pthread.h>
+
+int thrd_create()
+{
+}
