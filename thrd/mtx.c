@@ -1,9 +1,8 @@
-#include <sys/types.h>
 #define _GNU_SOURCE
 
 #include <err.h>
-#include <errno.h>
 #include <linux/futex.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/syscall.h>
@@ -19,56 +18,32 @@ static int futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct times
     return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
 }
 
-static void _lock(uint32_t* futexp)
+bool _try_lock(uint32_t* futexp)
 {
-    long s;
-    const uint32_t one = 1;
+    uint32_t expected = 0;
+    // 使用原子比较并交换操作尝试设置互斥锁的值为1
+    return CAS_strong(futexp, &expected, 1);
+}
 
-    /* atomic_compare_exchange_strong(ptr, oldval, newval)
-       atomically performs the equivalent of:
-
-           if (*ptr == *oldval)
-               *ptr = newval;
-
-           返回 true ， 如果 *ptr == *oldval
-       It returns true if the test yielded true and *ptr was updated. */
-
-    while (1) {
-
-        /* Is the futex available? */
-        // 如果 *futexp==1 ， 那么直接返回，并将 futexp 设置为0 ，相当于是设置 mutex flag，设置为上锁状态
-        // if (atomic_compare_exchange_strong(futexp, &one, 0)) {
-        if (CAS_strong(futexp, &one, 0)) {
-            break; /* Yes */
-        }
-
-        /* Futex is not available; wait. */
-
-        // 当 *futexp==0 的时候陷入等待
-        s = futex(futexp, FUTEX_WAIT, 0, NULL, NULL, 0);
-        if (s == -1 && errno != EAGAIN) {
-            err(EXIT_FAILURE, "futex-FUTEX_WAIT");
-        }
+void _lock(uint32_t* futexp)
+{
+    // 如果直接尝试获取锁失败，则进入等待
+    while (!_try_lock(futexp)) {
+        // syscall(SYS_futex, futex_val, FUTEX_WAIT, 1, NULL, NULL, 0);
+        futex(futexp, FUTEX_WAIT, 1, NULL, NULL, 0);
     }
 }
 
 static void _unlock(uint32_t* futexp)
 {
-    long s;
-    const uint32_t zero = 0;
-
-    /* atomic_compare_exchange_strong() was described
-       in comments above. */
-
-    // 如果已经 *futexp==0 ，相当于是 上锁状态，这个时候 通知一个线程解锁
-    if (CAS_strong(futexp, &zero, 1)) {
-        s = futex(futexp, FUTEX_WAKE, 1, NULL, NULL, 0);
-        if (s == -1) {
-            err(EXIT_FAILURE, "futex-FUTEX_WAKE");
-        }
-    }
+    __atomic_store_n(futexp, 0, __ATOMIC_SEQ_CST);
+    futex(futexp, FUTEX_WAKE, 1, NULL, NULL, 0);
 }
 
+/**
+ * @brief 锁列表
+ *
+ */
 static Node* _root = NULL;
 
 int mtx_create()
@@ -76,9 +51,10 @@ int mtx_create()
     /* 局部 static 状态 */
     static int _cnt = 1; // 锁的编号 从 1 开始
 
-    uint32_t* futex = malloc(sizeof(uint32_t));
-
-    _root = insert(_root, _cnt, futex);
+    uint32_t* futexp = malloc(sizeof(uint32_t));
+    // *futex = 1; // 设置为有效
+    __atomic_store_n(futexp, 0, __ATOMIC_SEQ_CST);
+    _root = insert(_root, _cnt, futexp);
 
     return _cnt++;
 }
@@ -86,13 +62,19 @@ int mtx_create()
 // 对指定编号的互斥锁在 共享区 上锁
 void mtx_lock(int mtx)
 {
-    uint32_t* futex = search(_root, mtx)->value;
-    _lock(futex);
+    Node* node = search(_root, mtx);
+    if (node == NULL) {
+        abort();
+    }
+    _lock(node->value);
 }
 
 // 对指定编号的互斥锁在 共享区 解锁
 void mtx_unlock(int mtx)
 {
-    uint32_t* futex = search(_root, mtx)->value;
-    _unlock(futex);
+    Node* node = search(_root, mtx);
+    if (node == NULL) {
+        abort();
+    }
+    _unlock(node->value);
 }

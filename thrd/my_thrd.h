@@ -10,3 +10,9 @@ int mtx_create();
 void mtx_lock(int mtx);
 // 对指定编号的互斥锁在 共享区 解锁
 void mtx_unlock(int mtx);
+
+#if 0
+#include <stdint.h>
+void _lock(uint32_t* futexp);
+void _unlock(uint32_t* futexp);
+#endif
