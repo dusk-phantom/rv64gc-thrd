@@ -1,20 +1,15 @@
 -- add_rules("mode.debug", "mode.release")
 add_rules("mode.debug")
 
-target("fhq")
-    set_kind("static")
-    add_files("fhq.c")
 
 target("mtx")
     set_kind("static")
     add_files("mtx.c")
-	add_deps("fhq")
 
-target("main")
+target("thrd_fork")
     set_kind("binary")
-    add_files("main.c")
+    add_files("my_thrd.c")
     add_deps("mtx")
-	add_deps("fhq")
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
