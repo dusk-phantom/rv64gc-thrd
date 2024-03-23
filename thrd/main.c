@@ -39,4 +39,6 @@ int main(void)
     }
 
     printf("sum=%d\n", sum); // 期望是 1,000 * 10 = 10,000
+
+    destroy_mtxs();
 }

@@ -12,8 +12,9 @@
 #include "my_thrd.h"
 
 #define CAS_strong(p_obj, p_expected, desired) __atomic_compare_exchange_n(p_obj, p_expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+#define ATOMIC_STORE_strong(p_obj, val) __atomic_store_n(p_obj, val, __ATOMIC_SEQ_CST)
 
-static int futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
+inline static int futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
 {
     return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
 }
@@ -36,7 +37,7 @@ void _lock(uint32_t* futexp)
 
 static void _unlock(uint32_t* futexp)
 {
-    __atomic_store_n(futexp, 0, __ATOMIC_SEQ_CST);
+    ATOMIC_STORE_strong(futexp, 0);
     futex(futexp, FUTEX_WAKE, 1, NULL, NULL, 0);
 }
 
@@ -53,7 +54,7 @@ int mtx_create()
 
     uint32_t* futexp = malloc(sizeof(uint32_t));
     // *futex = 1; // 设置为有效
-    __atomic_store_n(futexp, 0, __ATOMIC_SEQ_CST);
+    ATOMIC_STORE_strong(futexp, 0);
     _root = insert(_root, _cnt, futexp);
 
     return _cnt++;
@@ -77,4 +78,9 @@ void mtx_unlock(int mtx)
         abort();
     }
     _unlock(node->value);
+}
+
+void destroy_mtxs()
+{
+    freeTree(_root);
 }
