@@ -2,6 +2,9 @@
 .xmake/
 build/
 
+.*
+!.gitignore
+
 # MacOS Cache
 .DS_Store
 
