@@ -1,0 +1,16 @@
+[
+{
+  "directory": "/home/wangfiox/Documents/rv64gc-thrd/thrd",
+  "arguments": ["/usr/bin/gcc", "-c", "-m64", "-fvisibility=hidden", "-O3", "-DNDEBUG", "-o", "build/.objs/fhq/linux/x86_64/release/fhq.c.o", "fhq.c"],
+  "file": "fhq.c"
+},
+{
+  "directory": "/home/wangfiox/Documents/rv64gc-thrd/thrd",
+  "arguments": ["/usr/bin/gcc", "-c", "-m64", "-fvisibility=hidden", "-O3", "-DNDEBUG", "-o", "build/.objs/thrd/linux/x86_64/release/mtx.c.o", "mtx.c"],
+  "file": "mtx.c"
+},
+{
+  "directory": "/home/wangfiox/Documents/rv64gc-thrd/thrd",
+  "arguments": ["/usr/bin/gcc", "-c", "-m64", "-fvisibility=hidden", "-O3", "-DNDEBUG", "-o", "build/.objs/thrd/linux/x86_64/release/my_thrd.c.o", "my_thrd.c"],
+  "file": "my_thrd.c"
+}]

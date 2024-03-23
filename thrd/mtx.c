@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #define _GNU_SOURCE
 
 #include <err.h>
@@ -8,20 +9,17 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "fhq.h"
+#include "my_thrd.h"
+
 #define CAS_strong(p_obj, p_expected, desired) __atomic_compare_exchange_n(p_obj, p_expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 
-static int
-futex(uint32_t* uaddr, int futex_op, uint32_t val,
-    const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
+static int futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
 {
-    return syscall(SYS_futex, uaddr, futex_op, val,
-        timeout, uaddr2, val3);
+    return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
 }
 
-/* Acquire the futex pointed to by 'futexp': wait for its value to
-   become 1, and then set the value to 0. */
-
-void mtx_lock(uint32_t* futexp)
+static void _lock(uint32_t* futexp)
 {
     long s;
     const uint32_t one = 1;
@@ -54,11 +52,7 @@ void mtx_lock(uint32_t* futexp)
     }
 }
 
-/* Release the futex pointed to by 'futexp': if the futex currently
-   has the value 0, set its value to 1 and then wake any futex waiters,
-   so that if the peer is blocked in fwait(), it can proceed. */
-
-void mtx_unlock(uint32_t* futexp)
+static void _unlock(uint32_t* futexp)
 {
     long s;
     const uint32_t zero = 0;
@@ -73,4 +67,32 @@ void mtx_unlock(uint32_t* futexp)
             err(EXIT_FAILURE, "futex-FUTEX_WAKE");
         }
     }
+}
+
+static Node* _root = NULL;
+
+int mtx_create()
+{
+    /* 局部 static 状态 */
+    static int _cnt = 1; // 锁的编号 从 1 开始
+
+    uint32_t* futex = malloc(sizeof(uint32_t));
+
+    _root = insert(_root, _cnt, futex);
+
+    return _cnt++;
+}
+
+// 对指定编号的互斥锁在 共享区 上锁
+void mtx_lock(int mtx)
+{
+    uint32_t* futex = search(_root, mtx)->value;
+    _lock(futex);
+}
+
+// 对指定编号的互斥锁在 共享区 解锁
+void mtx_unlock(int mtx)
+{
+    uint32_t* futex = search(_root, mtx)->value;
+    _unlock(futex);
 }
