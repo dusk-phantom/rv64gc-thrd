@@ -6,6 +6,7 @@ build/
 !.gitignore
 
 *.out
+*.o
 
 # MacOS Cache
 .DS_Store
