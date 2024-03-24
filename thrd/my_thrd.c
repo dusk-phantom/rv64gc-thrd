@@ -32,12 +32,9 @@ static pid_t tids[THREADS_num];
 // 这个可以用于 join
 static uint32_t futexs[THREADS_num];
 
-int arr[2];
-
 int dummy(void* regs)
 {
     // 我会在这里进行一些寄存器的保存工作
-    arr[1] = 10;
     free(regs);
     return 0;
 }
@@ -56,7 +53,7 @@ int thrd_create()
     static const uint64_t STACK_SIZE = 65536;
     void* stack;
     posix_memalign(&stack, 16, STACK_SIZE); // 注意内存对齐
-    if (!stack) {
+    if (stack == NULL) {
         // perror("posix_memalign stack error\n");
         return -1;
     }
@@ -83,10 +80,8 @@ int thrd_create()
         return -1;
     } else if (ret == 0) {
         // 也就是说，子线程确实不会进入到这里
-        arr[0] = 40;
         return 0; // 子线程
     } else {
-        arr[0] = 20;
         sleep(1);
         return cnt;
     }
@@ -97,8 +92,6 @@ int thrd_create()
 int main(void)
 {
     thrd_create();
-    printf("arr[0]=%d\n", arr[0]);
-    printf("arr[1]=%d\n", arr[1]);
     return 0;
 }
 
