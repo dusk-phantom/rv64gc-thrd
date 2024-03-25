@@ -1,4 +1,8 @@
+#if 0
 #include "my_thrd.h"
+#else
+int thrd_create();
+#endif
 #include <stdio.h>
 
 int main(void)
