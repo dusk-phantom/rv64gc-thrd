@@ -1,207 +1,245 @@
-# /* ---------- ---------- thread_create ---------- ---------- */
-#
-# /*
-# * 主线程的 id=0 ，但是实际上是存放在 tids[1] 这个位置 ， 要不我搞一个映射：返回值是 cnt-1
-# * 子线程不用管，因为子线程就是返回 0 ， 父线程返回 cnt-1
-# */
-thrd_create: # @thrd_create
-	addi  sp, sp, -80
-	sd    ra, 72(sp)                       # 8-byte Folded Spill
-	sd    s0, 64(sp)                       # 8-byte Folded Spill
-	addi  s0, sp, 80
+	.file               "my_thrd.c"
+	.option             pic
+	.attribute          arch, "rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zifencei2p0"
+	.attribute          unaligned_access, 0
+	.attribute          stack_align, 16
 
-.Lpcrel_hi0:
-	auipc a0, %pcrel_hi(tids)
-	addi  a0, a0, %pcrel_lo(.Lpcrel_hi0)
-	lw    a0, 0(a0)
-	bnez  a0, .LBB1_2
-	j     .LBB1_1                          # if tids[0] == 0
-.LBB1_1:
-	li    a0, 178
-	call  syscall                          # gettid
-.Lpcrel_hi1:
-	auipc a1, %pcrel_hi(tids)
-	addi  a1, a1, %pcrel_lo(.Lpcrel_hi1)
-	lw    a2, 0(a1)
-	addiw a2, a2, 1
-	sw    a2, 0(a1)
-	slli  a2, a2, 2
-	add   a1, a1, a2
-	sw    a0, 0(a1)                        # tids[++tids[0]] = gettid
-	j     .LBB1_2
-.LBB1_2:
-.Lpcrel_hi2:
-	auipc a0, %pcrel_hi(tids)
-	addi  a0, a0, %pcrel_lo(.Lpcrel_hi2)
-	lw    a0, 4(a0)
-	sd    a0, -72(s0)                      # 8-byte Folded Spill
-	li    a0, 178
-	call  syscall
-	mv    a1, a0
-	ld    a0, -72(s0)                      # 8-byte Folded Reload
-	beq   a0, a1, .LBB1_4
-	j     .LBB1_3                          # if tids[1] != gettid
-.LBB1_3:
-	li    a0, -1
-	sw    a0, -20(s0)
-	j     .main_fail
-.LBB1_4:
-	addi  a0, s0, -32
-	li    a1, 16
-	lui   a2, 16
-	call  posix_memalign
-	ld    a0, -32(s0)
-	bnez  a0, .LBB1_6
-	j     .LBB1_5                          # if stack == NULL
-.LBB1_5:
-	li    a0, -1
-	sw    a0, -20(s0)
-	j     .main_fail
-.LBB1_6:
-	ld    a0, -32(s0)
-	lui   a1, 16
-	add   a0, a0, a1
-	sd    a0, -40(s0)                      # stack_top = stack + 65536
-	li    a0, 104                          # 用于保存 ra、 s0~s11 等
-	call  malloc
-	sd    a0, -48(s0)
-	ld    a0, -48(s0)
-	bnez  a0, .LBB1_8
-	j     .LBB1_7                          # if regs == NULL
-.LBB1_7:
-	li    a0, -1
-	sw    a0, -20(s0)
-	j     .main_fail
-.LBB1_8:
+# ########## ########## 下面是 .bss 段 ########## ########## #
 
-# FIXME 先保存寄存器
-# 可以用的寄存器：a1、a2、a3
-	ld    a0, -48(s0)
-
-	ld    a1, -8(s0)                       # ra
-	sd    a1, 0(a0)
-
-	ld    a1, -16(s0)                      # s0'
-	sd    a1, 8(a0)
-
-	sd    s1, 16(a0)
-	sd    s2, 24(a0)
-	sd    s3, 32(a0)
-	sd    s4, 40(a0)
-	sd    s5, 48(a0)
-	sd    s6, 56(a0)
-	sd    s7, 64(a0)
-	sd    s8, 72(a0)
-	sd    s9, 80(a0)
-	sd    s10, 88(a0)
-	sd    s11, 96(a0)
-
-	ld    a1, -32(s0)                      # stack
-	sd    a1, 104(a0)
-
-	ld    a1, -40(s0)                      # stack_top
-	sd    a1, 112(a0)
-
-	ld    a1, -56(s0)                      # cnt
-	sd    a1, 116(a0)
-
-	add   a1, sp, s0
-	sd    a1, 120(a0)
-
-# FIXME 寄存器保存完毕
-
-	lui   a0, 4945
-	addiw a0, a0, -256
-	sw    a0, -52(s0)
-.Lpcrel_hi3:
-	auipc a0, %pcrel_hi(tids)
-	addi  a0, a0, %pcrel_lo(.Lpcrel_hi3)
-	lw    a1, 0(a0)                        # cnt = ++tids[0]
-	addiw a1, a1, 1
-	sw    a1, 0(a0)
-	sw    a1, -56(s0)
-	ld    a1, -40(s0)                      # a1 = stack_top
-	lw    a2, -52(s0)                      # a2 = flags
-	ld    a3, -48(s0)                      # a3 = regs buffer 给 dummy 传入的参数
-	lw    a4, -56(s0)                      # cnt
-	slli  a5, a4, 2
-	add   a4, a0, a5                       # a4 = &tids[cnt]
-.Lpcrel_hi4:
-	auipc a0, %pcrel_hi(futexs)
-	addi  a0, a0, %pcrel_lo(.Lpcrel_hi4)
-	add   a6, a0, a5                       # a6 = &futexs[cnt]
-.Lpcrel_hi5:
-	auipc a0, %pcrel_hi(son_leave)
-	addi  a0, a0, %pcrel_lo(.Lpcrel_hi5)
-	li    a5, 0                            # a5 = NULL （ 应该是设置 tls 啥的 ）
-	call  clone                            # TODO 这里很重要
-	j     .main_leave                      # 主线程离开
-
-.main_fail: # error 情况退出
-	lw    a0, -20(s0)
-	ld    ra, 72(sp)                       # 8-byte Folded Reload
-	ld    s0, 64(sp)                       # 8-byte Folded Reload
-	addi  sp, sp, 80
-	ret
-
-.main_leave: # 能到达这里的，只有主线程
-	sw    a0, -60(s0)                      # ret = clone 的返回值
-	lw    a0, -60(s0)
-	blez  a0, .main_fail
-	j     .main_success                    # if ret > 0
-.main_success:
-	auipc a1, %pcrel_hi(tids)
-	addi  a1, a1, %pcrel_lo(.main_success)
-	lw    a0, 0(a1)                        # 返回值
-	ld    ra, 72(sp)                       # 恢复寄存器 # 8-byte Folded Reload
-	ld    s0, 64(sp)                       # 8-byte Folded Reload
-	addi  sp, sp, 80                       # 退栈
-	jr    ra
-
-
-son_leave: # 能达到这里的，只有子线程，这里得到 a0 = regs 缓冲区 # FIXME
-# 也就是有一个问题：子线程什么情况下会结束 ---> 碰到 ret 会结束，因此函数的返回就不能用 ret ，而应当使用 jr
-	ld    ra, 0(a0)
-	ld    s0, 8(a0)
-# ld s1, 16(a0) ，暂时不复制，因为我下面会稍微用到
-	ld    s2, 24(a0)
-	ld    s3, 32(a0)
-	ld    s4, 40(a0)
-	ld    s5, 48(a0)
-	ld    s6, 56(a0)
-	ld    s7, 64(a0)
-	ld    s8, 72(a0)
-	ld    s9, 80(a0)
-	ld    s10, 88(a0)
-	ld    s11, 96(a0)
-
-# s1 暂存 a0，也就是 regs 表
-	mv    s1, a0
-
-# 复制 main 的 栈 1024B
-	ld    a1, 120(s1)
-	addi  sp, sp, -1024
-	mv    a0, sp
-	li    a2, 1024
-	call  memcpy
-
-# 恢复 s1，并 free regs
-	addi  sp, sp, -16
-	ld    a0, 16(s1)
-	sw    a0, 0(sp)
-	mv    a0, s1
-	call  free
-	ld    s1, 0(sp)
-	addi  sp, sp, 16
-
-	li    a0, 0
-	jr    ra
-
+	.text
+	.globl              tids
+	.bss
+	.align              3
+	.set                .LANCHOR_tids,. + 0                                            # 设置锚点
+	.type               tids, @object
+	.size               tids, 80
 tids:
-	.zero 80
+	.zero               80
 
+	.globl              futexs
+	.align              3
+	.set                .LANCHOR_futexs,. + 0                                          # 设置锚点
+	.type               futexs, @object
+	.size               futexs, 80
 futexs:
-	.zero 80
+	.zero               80
 
-lock:
-	.zero 4
+	.globl              tmp_mem
+	.align              3
+	.set                .LANCHOR_tmp_mem,. + 0                                         # 设置锚点
+	.type               tmp_mem, @object
+	.size               tmp_mem, 1600
+tmp_mem:
+	.zero               1600
+
+# ########## ########## 下面是 .text 段 ########## ########## #
+
+# ---------- ---------- son_leave ---------- ----------
+
+	.text
+	.align              1
+	.globl              son_leave
+	.type               son_leave, @function
+son_leave:
+	.cfi_startproc
+# 这个时候，a0 传进来的是 cnt
+	lla                 a1, .LANCHOR_tmp_mem
+	lla                 a0, .LANCHOR_tids
+	lw                  a0, 0(a0)                                                      # a0 = cnt
+
+	slliw               a2, a0, 8
+	add                 a1, a1,a2                                                      # a1 = tids[cnt]
+
+.LB_restore:
+	ld                  ra,0(a1)
+	ld                  s0,8(a1)
+	ld                  s1,16(a1)
+	ld                  s2,24(a1)
+	ld                  s3,32(a1)
+	ld                  s4,40(a1)
+	ld                  s5,48(a1)
+	ld                  s6,56(a1)
+	ld                  s7,64(a1)
+	ld                  s8,72(a1)
+	ld                  s9,80(a1)
+	ld                  s10,88(a1)
+	ld                  s11,96(a1)
+
+	mv                  s1,a1                                                          # s1 = tids[cnt]
+	mv                  s0,a0                                                          # s0 = cnt
+
+	ld                  a1,8(a1)                                                       # a1 = src
+	addi                sp,sp,-800                                                     # 栈是 800B 的大小
+	mv                  a0,sp                                                          # a0 = dest
+	li                  a2,800                                                         # a2 = 800
+	call                memcpy@plt
+
+	mv                  a1,s1                                                          # a1 = tids[cnt]
+	mv                  a0,s0                                                          # s0 = cnt
+
+	ld                  ra,0(a1)
+	ld                  s0,8(a1)                                                       # 这个 s0 和 s1 按道理来说应该是没有改变的
+	ld                  s1,16(a1)
+	ld                  ra,0(a1)
+	li                  a0, 0                                                          # 生成返回值
+	jr                  ra
+
+	.cfi_endproc
+	.size               son_leave, .-son_leave
+
+# ---------- ---------- thrd_create ---------- ----------
+
+	.align              1
+	.globl              thrd_create
+	.type               thrd_create, @function
+thrd_create:
+.LFB7:
+	.cfi_startproc
+	addi                sp,sp,-64
+	.cfi_def_cfa_offset 64
+	sd                  ra,56(sp)
+	sd                  s0,48(sp)
+	sd                  s1,40(sp)
+	.cfi_offset         1, -8
+	.cfi_offset         8, -16
+	.cfi_offset         9, -24
+	addi                s0,sp,64
+	.cfi_def_cfa        8, 0
+	lla                 a5,tids
+	lw                  a5,0(a5)
+	bne                 a5,zero,.L4                                                    # if tids[0] == 0
+	li                  a0,178
+	call                syscall@plt
+	mv                  a3,a0
+	lla                 a5,tids
+	lw                  a5,0(a5)
+	addiw               a5,a5,1
+	sext.w              a4,a5
+	lla                 a5,tids
+	sw                  a4,0(a5)
+	lla                 a5,tids
+	lw                  a5,0(a5)
+	sext.w              a4,a3
+	lla                 a3,tids
+	slli                a5,a5,2
+	add                 a5,a3,a5
+	sw                  a4,0(a5)
+.L4:
+	lla                 a5,tids
+	lw                  a5,4(a5)
+	mv                  s1,a5
+	li                  a0,178
+	call                syscall@plt
+	mv                  a5,a0
+	beq                 s1,a5,.L5
+	j                   .fail                                                          # if tids[1] != gettid
+.L5:
+	lla                 a5,STACK_SIZE.0
+	ld                  a4,0(a5)
+	addi                a5,s0,-64
+	mv                  a2,a4
+	li                  a1,16
+	mv                  a0,a5
+	call                posix_memalign@plt
+	ld                  a5,-64(s0)
+	bne                 a5,zero,.L7                                                    # if stack != NULL
+	j                   .fail
+.L7:
+	ld                  a4,-64(s0)
+	lla                 a5,STACK_SIZE.0
+	ld                  a5,0(a5)
+	add                 a5,a4,a5
+	sd                  a5,-40(s0)                                                     # top
+	li                  a5,20254720
+	addi                a5,a5,-256
+	sw                  a5,-44(s0)                                                     # flag
+	lla                 a5,tids
+	lw                  a5,0(a5)
+	addiw               a5,a5,1
+	sext.w              a4,a5
+	lla                 a5,tids
+	sw                  a4,0(a5)                                                       # ++tids[0]
+	lla                 a5,tids
+	lw                  a5,0(a5)
+	sw                  a5,-48(s0)                                                     # cnt
+
+.LBB_backup:
+	lla                 a1, tmp_mem
+	lw                  a0, -48(s0)                                                    # cnt
+	slliw               a0, a0, 8
+	add                 a1,a1,a0
+	ld                  ra, -8(s0)                                                     # r0
+	sd                  ra,0(a1)
+	ld                  a0, -16(s0)
+	sd                  a0,8(a1)
+	ld                  a0, -24(a1)                                                    # s1
+	sd                  a0,16(a1)
+	sd                  s2,24(a1)
+	sd                  s3,32(a1)
+	sd                  s4,40(a1)
+	sd                  s5,48(a1)
+	sd                  s6,56(a1)
+	sd                  s7,64(a1)
+	sd                  s8,72(a1)
+	sd                  s9,80(a1)
+	sd                  s10,88(a1)
+	sd                  s11,96(a1)
+
+.LB_clone:
+	lw                  a5,-48(s0)
+	slli                a4,a5,2
+	lla                 a5,tids
+	add                 a3,a4,a5
+	lw                  a5,-48(s0)
+	slli                a4,a5,2
+	lla                 a5,futexs
+	add                 a5,a4,a5
+	lw                  a2,-44(s0)                                                     # a2 = flag
+	mv                  a6,a5                                                          # a6 = futexs[cnt]
+	li                  a5,0                                                           # a5 = NULL
+	mv                  a4,a3                                                          # a4 = &tids[cnt]
+# lla a3, tids # 传入参数是 tids
+# lw a3, -48(s0)
+	li                  a3, 0                                                          # a3 = 0
+# li a3,0 # a3 = NULL
+	ld                  a1,-40(s0)                                                     # a1 = stack_top
+	lla                 a0,son_leave                                                   # a0 = son_leave
+	call                clone@plt                                                      # TODO 重点
+	j                   .main_leave
+
+.main_leave:
+	lw                  a5,-48(s0)
+	mv                  a0, a5
+	addi                a0, a0, -1
+	ld                  ra,56(sp)
+	ld                  s0,48(sp)
+	ld                  s1,40(sp)
+	addi                sp,sp,64
+	jr                  ra
+
+.fail:
+	li                  a0, -1
+	ld                  ra,56(sp)
+	.cfi_restore        1
+	ld                  s0,48(sp)
+	.cfi_restore        8
+	.cfi_def_cfa        2, 64
+	ld                  s1,40(sp)
+	.cfi_restore        9
+	addi                sp,sp,64
+	.cfi_def_cfa_offset 0
+	jr                  ra
+	.cfi_endproc
+.LFE7:
+	.size               thrd_create, .-thrd_create
+
+	.section            .rodata
+	.align              3
+	.type               STACK_SIZE.0, @object
+	.size               STACK_SIZE.0, 8
+STACK_SIZE.0:
+	.dword              65536
+
+.ident "GCC:
+	(Debian             13.2.0-1) 13.2.0"
+	.section            .note.GNU-stack,"",@progbits

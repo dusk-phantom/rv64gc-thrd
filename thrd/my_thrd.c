@@ -32,9 +32,12 @@ pid_t tids[THREADS_num];
 // 这个可以用于 join
 uint32_t futexs[THREADS_num];
 
-int dummy(void* regs)
+char tmp_mem[1600];
+
+int dummy()
 {
-    free(regs);
+    tids[5] = 23;
+    tmp_mem[10] = 'a';
     return 0;
 }
 
@@ -63,12 +66,8 @@ int thrd_create()
         | CLONE_CHILD_SETTID | CLONE_PARENT_SETTID;
     // 就直接认为这个 clone 会成功吧，如果失败的话，也就是 ret < 0 ，fatal 错误
 
-    char* regs = malloc(128);
-    if (regs == NULL) {
-        // perror("posix_memalign stack error\n");
-        return -1;
-    }
-
     int cnt = ++tids[0];
-    int ret = clone(dummy, stack_top, flags, regs, &tids[cnt], NULL, &futexs[cnt]);
+    int ret = clone(dummy, stack_top, flags, NULL, &tids[cnt], NULL, &futexs[cnt]);
+
+    return cnt;
 }
