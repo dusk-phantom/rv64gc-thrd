@@ -27,19 +27,21 @@
  *
  */
 
-#define CAS_strong(p_obj, p_expected, desired) __atomic_compare_exchange_n(p_obj, p_expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
-#define ATOMIC_STORE_strong(p_obj, val) __atomic_store_n(p_obj, val, __ATOMIC_SEQ_CST)
+// #define CAS_strong(p_obj, p_expected, desired) __atomic_compare_exchange_n(p_obj, p_expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+// #define ATOMIC_STORE_strong(p_obj, val) __atomic_store_n(p_obj, val, __ATOMIC_SEQ_CST)
 
-inline static int futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
-{
-    return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
-}
+#define futex(uaddr, futex_op, val, timeout, uaddr2, val3) syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
+// inline static int futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
+// {
+//     return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
+// }
 
 bool _try_lock(uint32_t* futexp)
 {
     uint32_t expected = 0;
     // 使用原子比较并交换操作尝试设置互斥锁的值为1
-    return CAS_strong(futexp, &expected, 1);
+    // return CAS_strong(futexp, &expected, 1);
+    return __atomic_compare_exchange_n(futexp, &expected, 1, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 /**
@@ -59,7 +61,8 @@ int mtx_create()
     }
 
     // *futex = 0; // 设置为有效
-    ATOMIC_STORE_strong(futexp, 0);
+    // ATOMIC_STORE_strong(futexp, 0);
+    __atomic_store_n(futexp, 0, __ATOMIC_RELEASE); // 保护下面不会跑到上面
 
     mutexs[cnt] = futexp;
 
@@ -72,7 +75,6 @@ void mtx_lock(int mtx)
     uint32_t* futexp = mutexs[mtx];
     // 如果直接尝试获取锁失败，则进入等待
     while (!_try_lock(futexp)) {
-        // syscall(SYS_futex, futex_val, FUTEX_WAIT, 1, NULL, NULL, 0);
         futex(futexp, FUTEX_WAIT, 1, NULL, NULL, 0);
     }
 }
@@ -81,7 +83,8 @@ void mtx_lock(int mtx)
 void mtx_unlock(int mtx)
 {
     uint32_t* futexp = mutexs[mtx];
-    ATOMIC_STORE_strong(futexp, 0);
+    // ATOMIC_STORE_strong(futexp, 0);
+    __atomic_store_n(futexp, 0, __ATOMIC_RELEASE);
     futex(futexp, FUTEX_WAKE, 1, NULL, NULL, 0);
 }
 
@@ -92,7 +95,6 @@ void destroy_mtxs()
         free(mutexs[cnt--]);
     }
 }
-
 #if 0
 
 #include <pthread.h>
