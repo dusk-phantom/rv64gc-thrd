@@ -4,6 +4,34 @@
 	.attribute          unaligned_access, 0
 	.attribute          stack_align, 16
 
+# ########## ########## 下面是 .bss 段 ########## ########## #
+
+	.text
+	.globl              tids
+	.bss
+	.align              3
+	.set                .LANCHOR_tids,. + 0                                            # 设置锚点
+	.type               tids, @object
+	.size               tids, 80
+tids:
+	.zero               80
+
+	.globl              futexs
+	.align              3
+	.set                .LANCHOR_futexs,. + 0                                          # 设置锚点
+	.type               futexs, @object
+	.size               futexs, 80
+futexs:
+	.zero               80
+
+	.globl              tmp_mem
+	.align              3
+	.set                .LANCHOR_tmp_mem,. + 0                                         # 设置锚点
+	.type               tmp_mem, @object
+	.size               tmp_mem, 1600
+tmp_mem:
+	.zero               1600
+
 # ########## ########## 下面是 .text 段 ########## ########## #
 
 # ---------- ---------- son_leave ---------- ----------
@@ -15,15 +43,17 @@
 son_leave:
 	.cfi_startproc
 # 这个时候，a0 传进来的是 cnt
-	lla                 a1, tmp_mem
-	lla                 a0, tids
+	lla                 a1, .LANCHOR_tmp_mem
+	lla                 a0, .LANCHOR_tids
 	lw                  a0, 0(a0)                                                      # a0 = cnt
 
 	slliw               a2, a0, 8
-	add                 a1, a1, a2                                                     # a1 = tids[cnt]
+	add                 a1, a1,a2                                                      # a1 = tids[cnt]
 
 .LB_restore:
-# 这些寄存器不会被动到，直接恢复
+	ld                  ra,0(a1)
+	ld                  s0,8(a1)
+	ld                  s1,16(a1)
 	ld                  s2,24(a1)
 	ld                  s3,32(a1)
 	ld                  s4,40(a1)
@@ -47,14 +77,13 @@ son_leave:
 	mv                  a1,s1                                                          # a1 = tids[cnt]
 	mv                  a0,s0                                                          # s0 = cnt
 
-	li                  a0, 0                                                          # 生成返回值
 	ld                  ra,0(a1)
-	.cfi_restore        1
 	ld                  s0,8(a1)                                                       # 这个 s0 和 s1 按道理来说应该是没有改变的
-	.cfi_restore        8
 	ld                  s1,16(a1)
-	.cfi_restore        9
+	ld                  ra,0(a1)
+	li                  a0, 0                                                          # 生成返回值
 	jr                  ra
+
 	.cfi_endproc
 	.size               son_leave, .-son_leave
 
@@ -141,7 +170,7 @@ thrd_create:
 	add                 a1,a1,a0
 	ld                  ra, -8(s0)                                                     # r0
 	sd                  ra,0(a1)
-	ld                  a0, -16(s0)                                                    # s0
+	ld                  a0, -16(s0)
 	sd                  a0,8(a1)
 	ld                  a0, -24(a1)                                                    # s1
 	sd                  a0,16(a1)
@@ -156,8 +185,7 @@ thrd_create:
 	sd                  s10,88(a1)
 	sd                  s11,96(a1)
 	ld                  a0, -64(s0)
-	sd                  a0, 104(a1)                                                    # 保存 stack 的位置，在 thrd_join 的时候需要 free
-
+	sd                  a0, 104(a1)                                                    # 保存 stack 的位置
 	lw                  a0, -48(s0)                                                    # cnt
 	sw                  a0, 108(a1)                                                    # 保存 cnt ，注意：cnt 只有 4 个字节
 
@@ -188,13 +216,9 @@ thrd_create:
 	mv                  a0, a5
 	addi                a0, a0, -1
 	ld                  ra,56(sp)
-	.cfi_restore        1
 	ld                  s0,48(sp)
-	.cfi_restore        8
 	ld                  s1,40(sp)
-	.cfi_restore        9
 	addi                sp,sp,64
-	.cfi_def_cfa_offset 0
 	jr                  ra
 
 .fail:

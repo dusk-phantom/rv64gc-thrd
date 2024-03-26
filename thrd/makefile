@@ -4,14 +4,17 @@ CC=gcc
 CFLAGS=-g
 
 # 目标程序名
-TARGET=thrd
+TARGET=build/thrd
 
 # 默认目标
 all: $(TARGET)
 
+# src 列表
+SRCS=main.c thrd_create.s  thrd.c mtx.c
+
 # 编译规则
-$(TARGET): main.c thrd_create.s
-	$(CC) $(CFLAGS) main.c thrd_create.s -o $(TARGET)
+$(TARGET): $(SRCS)
+	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET)
 
 # 清理编译生成的文件
 clean:

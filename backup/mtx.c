@@ -13,14 +13,16 @@
 
 #include <err.h>
 #include <linux/futex.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
-#include "thrd.h"
+#if 1
+#include "my_thrd.h"
+#else
+#endif
 
 /**
  * @brief mtx=0 是可以获取；mtx=1 是已经上锁了
@@ -48,7 +50,7 @@ bool _try_lock(uint32_t* futexp)
  * 有一个假设：全局静态变量，总会初始化为0
  *
  */
-uint32_t* mutexs[100];
+static uint32_t* mutexs[100];
 
 int mtx_create()
 {
