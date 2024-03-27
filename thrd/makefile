@@ -17,11 +17,9 @@ $(TARGET): $(SRCS)
 	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET)
 
 # 清理编译生成的文件
+.PHONY clean
 clean:
 	rm -f $(TARGET)
-
-asm:
-	$(CC) -S my_thrd.c
 
 # 运行程序的目标
 run: $(TARGET)
