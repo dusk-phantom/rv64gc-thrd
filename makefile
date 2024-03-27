@@ -21,7 +21,7 @@ OBJS := $(OBJS:.s=.o)
 TARGET_LIB = $(BUILD_DIR)/libthrd.so
 
 # 默认目标
-all: $(TARGET_LIB)
+build: $(TARGET_LIB)
 
 # 规则：如何从源文件生成目标库
 $(TARGET_LIB): $(OBJS)
