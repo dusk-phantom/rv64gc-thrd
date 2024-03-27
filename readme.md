@@ -10,4 +10,9 @@
 
 实现了锁，锁通过 futex 实现的。
 
-线程创建还有些操蛋的地方
+线程创建还有些操蛋的地方：
+
+几个问题：
+
+1. 可能在外部访问库中的 tids、tmp_mem，当然我也没有公开这种访问方式
+2. 不要用 switch，用了 switch 一定要 break，用 if-else ，这是我真的觉得操蛋的地方，可以看看 test/test_b.c 与 test/test_c.c
