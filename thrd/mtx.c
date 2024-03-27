@@ -30,7 +30,7 @@
 // #define CAS_strong(p_obj, p_expected, desired) __atomic_compare_exchange_n(p_obj, p_expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 // #define ATOMIC_STORE_strong(p_obj, val) __atomic_store_n(p_obj, val, __ATOMIC_SEQ_CST)
 
-#define futex(uaddr, futex_op, val, timeout, uaddr2, val3) syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
+#define futex(uaddr, futex_op, val, timeout, uaddr2, val3) syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3)
 // inline static int futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
 // {
 //     return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);

@@ -1,28 +1,11 @@
 #pragma once
 
-#include <stdint.h>
-#include <unistd.h>
-
-/**
- * @brief threads[0] 表示 cnt ，有多少个线程，当然也可以表示：最后一个线程的下标
- * 假设是：全局静态变量初始化为 0
- * threads[1] 用来表示 主线程
- * 最多 20 个线程，应该不会需要太多
- *
- */
-#define THREADS_num 20
-extern pid_t tids[THREADS_num];
-
-// 这个可以用于 join
-extern uint32_t futexs[THREADS_num];
-
-extern char tmp_mem[1600];
-
 /**
  * @brief 创建一个线程并且返回线程的编号(主线程返回0,其他线程返回非0正值),线程中的函数自当前之后下一行开始执行,如果创建线程失败返回-1
  *
  * @return int
  */
+#include <sys/types.h>
 int thrd_create();
 
 /**
@@ -58,5 +41,3 @@ void mtx_unlock(int mtx);
  *
  */
 void destroy_mtxs();
-
-int _get_tid(void);

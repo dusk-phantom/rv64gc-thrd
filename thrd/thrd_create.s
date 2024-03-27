@@ -14,16 +14,26 @@
 	.type               son_leave, @function
 son_leave:
 	.cfi_startproc
-# 这个时候，a0 传进来的是 cnt
-	lla                 a1, tmp_mem
 	lla                 a0, tids
 	lw                  a0, 0(a0)                                                      # a0 = cnt
-
 	slliw               a2, a0, 8
+	lla                 a1, tmp_mem
 	add                 a1, a1, a2                                                     # a1 = tids[cnt]
 
+	mv                  s1,a1                                                          # s1 = tids[cnt]
+	mv                  s0,a0                                                          # s0 = cnt
+
+# memcpy(dest, src, n); 也就是 memcpy(sp, s0, 1024)
+	ld                  a1,104(a1)                                                     # 主线程的栈底
+	addi                sp,sp,-1024
+	mv                  a0,sp
+	li                  a2,1024
+	call                memcpy@plt
+
+
 .LB_restore:
-# 这些寄存器不会被动到，直接恢复
+	mv                  a1,s1                                                          # a1 = tids[cnt]
+	mv                  a0,s0                                                          # s0 = cnt
 	ld                  s2,24(a1)
 	ld                  s3,32(a1)
 	ld                  s4,40(a1)
@@ -35,25 +45,13 @@ son_leave:
 	ld                  s10,88(a1)
 	ld                  s11,96(a1)
 
-	mv                  s1,a1                                                          # s1 = tids[cnt]
-	mv                  s0,a0                                                          # s0 = cnt
-
-	ld                  a1,8(a1)                                                       # a1 = src
-	addi                sp,sp,-800                                                     # 栈是 800B 的大小
-	mv                  a0,sp                                                          # a0 = dest
-	li                  a2,800                                                         # a2 = 800
-	call                memcpy@plt
-
-	mv                  a1,s1                                                          # a1 = tids[cnt]
-	mv                  a0,s0                                                          # s0 = cnt
-
-	li                  a0, 0                                                          # 生成返回值
 	ld                  ra,0(a1)
 	.cfi_restore        1
-	ld                  s0,8(a1)                                                       # 这个 s0 和 s1 按道理来说应该是没有改变的
+	ld                  s0,8(a1)
 	.cfi_restore        8
 	ld                  s1,16(a1)
 	.cfi_restore        9
+	li                  a0, 0                                                          # 生成返回值
 	jr                  ra
 	.cfi_endproc
 	.size               son_leave, .-son_leave
@@ -138,11 +136,11 @@ thrd_create:
 	lla                 a1, tmp_mem
 	lw                  a0, -48(s0)                                                    # cnt
 	slliw               a0, a0, 8
-	add                 a1,a1,a0
+	add                 a1,a1,a0                                                       # tmp_mem[cnt]
 	ld                  ra, -8(s0)                                                     # r0
 	sd                  ra,0(a1)
-	ld                  a0, -16(s0)                                                    # s0
-	sd                  a0,8(a1)
+	ld                  a0, -16(s0)                                                    # s0'
+	sd                  a0, 8(a1)
 	ld                  a0, -24(a1)                                                    # s1
 	sd                  a0,16(a1)
 	sd                  s2,24(a1)
@@ -155,23 +153,26 @@ thrd_create:
 	sd                  s9,80(a1)
 	sd                  s10,88(a1)
 	sd                  s11,96(a1)
-	ld                  a0, -64(s0)
-	sd                  a0, 104(a1)                                                    # 保存 stack 的位置，在 thrd_join 的时候需要 free
 
-	lw                  a0, -48(s0)                                                    # cnt
-	sw                  a0, 108(a1)                                                    # 保存 cnt ，注意：cnt 只有 4 个字节
+# addi a0, sp, 64 # 因为 s0 是栈底
+	mv                  a0, s0                                                         # 因为 s0 是栈底
+	sd                  a0, 104(a1)                                                    # sp + 64 当前栈的 栈底
+
+	ld                  a0, -64(s0)
+	sd                  a0, 112(a1)                                                    # stack
 
 .LB_clone:
 	lw                  a5,-48(s0)
 	slli                a4,a5,2
 	lla                 a5,tids
 	add                 a3,a4,a5
-	lw                  a5,-48(s0)
-	slli                a4,a5,2
-	lla                 a5,futexs
-	add                 a5,a4,a5
+# lw a5,-48(s0)
+# slli a4,a5,2
+# lla a5,futexs
+# add a5,a4,a5
 	lw                  a2,-44(s0)                                                     # a2 = flag
-	mv                  a6,a5                                                          # a6 = futexs[cnt]
+# mv a6,a5 # a6 = futexs[cnt]
+	li                  a6, 0                                                          # a6 = NULL
 	li                  a5,0                                                           # a5 = NULL
 	mv                  a4,a3                                                          # a4 = &tids[cnt]
 # lla a3, tids # 传入参数是 tids

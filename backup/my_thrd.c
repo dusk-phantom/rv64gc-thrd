@@ -30,7 +30,7 @@
 pid_t tids[THREADS_num];
 
 // 这个可以用于 join
-uint32_t futexs[THREADS_num];
+// uint32_t futexs[THREADS_num];
 
 char tmp_mem[1600];
 

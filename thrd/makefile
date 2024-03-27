@@ -10,7 +10,7 @@ TARGET=build/thrd
 all: $(TARGET)
 
 # src 列表
-SRCS=main.c thrd_create.s  thrd.c mtx.c
+SRCS=main.c thrd_create.s thrd.c mtx.c thrd_join.c
 
 # 编译规则
 $(TARGET): $(SRCS)
