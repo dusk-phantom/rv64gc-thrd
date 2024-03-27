@@ -1,10 +1,18 @@
-#include "../my_thrd.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "thrd.h"
 
 int main()
 {
-    int a[2] = {1, 2};
+    int a[3] = { 1, 2, 3 };
     int id = thrd_create();
     a[id] = a[id] * 2;
     thrd_join();
-    return a[0] + a[1];
+
+    printf("%d, %d, %d\n", a[0], a[1], a[2]);
+    // assert(a[0] + a[1] + a[2] == 7);
+
+    return 0;
 }

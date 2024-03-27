@@ -41,7 +41,7 @@ bool _try_lock(uint32_t* futexp)
     uint32_t expected = 0;
     // 使用原子比较并交换操作尝试设置互斥锁的值为1
     // return CAS_strong(futexp, &expected, 1);
-    return __atomic_compare_exchange_n(futexp, &expected, 1, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+    return __atomic_compare_exchange_n(futexp, &expected, 1, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
 /**
@@ -50,7 +50,7 @@ bool _try_lock(uint32_t* futexp)
  * 有一个假设：全局静态变量，总会初始化为0
  *
  */
-uint32_t* mutexs[100];
+volatile uint32_t* mutexs[100];
 
 int mtx_create()
 {
@@ -62,7 +62,7 @@ int mtx_create()
 
     // *futex = 0; // 设置为有效
     // ATOMIC_STORE_strong(futexp, 0);
-    __atomic_store_n(futexp, 0, __ATOMIC_RELEASE); // 保护下面不会跑到上面
+    __atomic_store_n(futexp, 0, __ATOMIC_SEQ_CST); // 保护下面不会跑到上面
 
     mutexs[cnt] = futexp;
 
@@ -84,7 +84,7 @@ void mtx_unlock(int mtx)
 {
     uint32_t* futexp = mutexs[mtx];
     // ATOMIC_STORE_strong(futexp, 0);
-    __atomic_store_n(futexp, 0, __ATOMIC_RELEASE);
+    __atomic_store_n(futexp, 0, __ATOMIC_SEQ_CST);
     futex(futexp, FUTEX_WAKE, 1, NULL, NULL, 0);
 }
 

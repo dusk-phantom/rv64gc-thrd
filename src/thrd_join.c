@@ -29,7 +29,7 @@ int thrd_join(void)
     if (gettid() == getpid()) { // 主线程
         // wait
 
-        while (__atomic_load_n(&tids[0], __ATOMIC_ACQUIRE) > 1) { // 陷入等待
+        while (__atomic_load_n(&tids[0], __ATOMIC_SEQ_CST) > 1) { // 陷入等待
             futex(&futex_var, FUTEX_WAIT, futex_var, NULL, NULL, 0);
         }
 
@@ -44,7 +44,7 @@ int thrd_join(void)
 
     } else {
 
-        __atomic_sub_fetch(&tids[0], 1, __ATOMIC_RELEASE); // 保证下面的总是可见
+        __atomic_sub_fetch(&tids[0], 1, __ATOMIC_SEQ_CST); // 保证下面的总是可见
 
         // futex_wait 的 val 表示唤醒的线程数
         futex(&futex_var, FUTEX_WAKE, 1, NULL, NULL, 0);

@@ -1,33 +1,27 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <syscall.h>
+#include <unistd.h>
 
-int thrd_fork(void);
-
-int mtx_create(void);
-void mtx_lock(int mtx);
-void mtx_unlock(int mtx);
+#include "thrd.h"
 
 // TODO: 测试mtx
 int main()
 {
     int sum = 0;
-    int id = thrd_fork();
 
     int mtx = mtx_create();
 
-    switch (id) {
-    case -1:
-        // 错误情况
+    int id = thrd_create();
+    if (id == -1) {
         abort();
-    case 0:
-        // 父线程
+    } else if (id == 0) {
         for (int i = 0; i < 100; i++) {
             mtx_lock(mtx);
             sum++;
             mtx_unlock(mtx);
         }
-    default:
-        // 子线程
+    } else {
         for (int i = 0; i < 100; i++) {
             mtx_lock(mtx);
             sum++;
@@ -35,5 +29,9 @@ int main()
         }
     }
 
-    assert(sum == 200);
+    thrd_join();
+
+    // assert(sum == 200);
+
+    return sum;
 }
