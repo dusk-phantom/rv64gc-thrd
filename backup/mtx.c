@@ -9,8 +9,6 @@
  *
  */
 
-#define _GNU_SOURCE
-
 #include <err.h>
 #include <linux/futex.h>
 #include <stdbool.h>

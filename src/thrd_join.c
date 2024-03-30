@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +25,7 @@ volatile uint32_t futex_var = 0;
 
 int thrd_join(void)
 {
-    if (gettid() == tids[1]) { // 主线程
+    if (syscall(SYS_gettid) == tids[1]) { // 主线程
         // wait
 
         while (__atomic_load_n(&tids[0], __ATOMIC_SEQ_CST) > 1) { // 陷入等待

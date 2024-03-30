@@ -114,6 +114,7 @@ main:
 	.cfi_endproc
 .LFE7:
 	.size               main, .-main
+
 .ident "GCC:
 	(Debian             13.2.0-1) 13.2.0"
 	.section            .note.GNU-stack,"",@progbits
