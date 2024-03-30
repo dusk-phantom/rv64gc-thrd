@@ -9,8 +9,6 @@
  *
  */
 
-#define _GNU_SOURCE
-
 #include "thrd.h"
 
 /**
