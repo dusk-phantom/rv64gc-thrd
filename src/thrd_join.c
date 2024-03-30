@@ -26,7 +26,7 @@ volatile uint32_t futex_var = 0;
 
 int thrd_join(void)
 {
-    if (gettid() == getpid()) { // 主线程
+    if (gettid() == tids[1]) { // 主线程
         // wait
 
         while (__atomic_load_n(&tids[0], __ATOMIC_SEQ_CST) > 1) { // 陷入等待

@@ -17,7 +17,7 @@ if [ ! -f "${TEST_FILE}" ]; then
 fi
 
 # 编译测试文件，并链接到 libthrd.so
-gcc -Wall -Iinc -o ${OUTPUT_FILE} ${TEST_FILE} -Lbuild -lthrd -Wl,-rpath,build
+gcc -Wall -g -Iinc -o ${OUTPUT_FILE} ${TEST_FILE} -Lbuild -lthrd -Wl,-rpath,build
 
 # 检查编译是否成功
 if [ "$?" -ne 0 ]; then

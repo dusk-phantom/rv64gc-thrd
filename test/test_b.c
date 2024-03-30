@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <syscall.h>
 #include <unistd.h>
@@ -13,43 +14,28 @@ int main()
     int mtx = mtx_create();
 
     int id = thrd_create();
-    // if (id == -1) {
-    //     abort();
-    // } else if (id == 0) {
-    //     for (int i = 0; i < 100; i++) {
-    //         mtx_lock(mtx);
-    //         sum++;
-    //         mtx_unlock(mtx);
-    //     }
-    // } else {
-    //     for (int i = 0; i < 100; i++) {
-    //         mtx_lock(mtx);
-    //         sum++;
-    //         mtx_unlock(mtx);
-    //     }
-    // }
     switch (id) {
     case -1:
         abort();
-    case 0:
+    case 0: // 主线程 ，因为 主线程的 tid == 0
         for (int i = 0; i < 100; i++) {
             mtx_lock(mtx);
             sum++;
             mtx_unlock(mtx);
         }
-        // break;
-    default:
+        break;
+    case 1: // 子线程，因为子线程的 tid == 0
         for (int i = 0; i < 100; i++) {
             mtx_lock(mtx);
             sum++;
             mtx_unlock(mtx);
         }
-        // break;
+        break;
     }
 
     thrd_join();
 
-    // assert(sum == 200);
+    printf("sum=%d\n", sum);
 
     return sum;
 }

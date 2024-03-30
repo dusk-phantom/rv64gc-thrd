@@ -14,8 +14,10 @@
 	.type               son_leave, @function
 son_leave:
 	.cfi_startproc
-	lla                 a0, tids
-	lw                  a0, 0(a0)                                                      # a0 = cnt
+# lla a0, tids
+# lw a0, 0(a0) # a0 = cnt
+
+# 传入参数：a0 = cnt
 	slliw               a2, a0, 8
 	lla                 a1, tmp_mem
 	add                 a1, a1, a2                                                     # a1 = tids[cnt]
@@ -29,7 +31,6 @@ son_leave:
 	mv                  a0,sp
 	li                  a2,1024
 	call                memcpy@plt
-
 
 .LB_restore:
 	mv                  a1,s1                                                          # a1 = tids[cnt]
@@ -51,7 +52,9 @@ son_leave:
 	.cfi_restore        8
 	ld                  s1,16(a1)
 	.cfi_restore        9
-	li                  a0, 0                                                          # 生成返回值
+# li a0, 0 # 生成返回值
+# a0 这个时候没有动过，注意
+	addiw               a0, a0, -1
 	jr                  ra
 	.cfi_endproc
 	.size               son_leave, .-son_leave
@@ -74,12 +77,16 @@ thrd_create:
 	.cfi_offset         9, -24
 	addi                s0,sp,64
 	.cfi_def_cfa        8, 0
+	li                  a0,178
+	call                syscall@plt
+	sw                  a0, -56(s0)                                                    # gettid 的 临时变量
 	lla                 a5,tids
 	lw                  a5,0(a5)
 	bne                 a5,zero,.L4                                                    # if tids[0] == 0
-	li                  a0,178
-	call                syscall@plt
-	mv                  a3,a0
+# li a0,178
+# call syscall@plt
+	lw                  a3, -56(s0)
+# mv a3,a0
 	lla                 a5,tids
 	lw                  a5,0(a5)
 	addiw               a5,a5,1
@@ -97,11 +104,43 @@ thrd_create:
 	lla                 a5,tids
 	lw                  a5,4(a5)
 	mv                  s1,a5
-	li                  a0,178
-	call                syscall@plt
-	mv                  a5,a0
-	beq                 s1,a5,.L5
-	j                   .fail                                                          # if tids[1] != gettid
+# li a0,178
+# call syscall@plt
+	lw                  a5, -56(s0)                                                    # gettid
+# mv a5,a0
+	beq                 s1,a5,.L5                                                      # 如果是 子线程调用了 thrd_create
+	j                   .LFB6__get_tid_1
+
+# j .main_leave # if tids[1] != gettid
+.LFB6__get_tid_1:
+	mv                  a7, a5                                                         # 上面 a5 = syscall(gettid)
+.while_init__get_tid_1:
+	lla                 a1, tids                                                       # a1 = tids 基址
+	lw                  a0, 0(a1)                                                      # a0 = cnt
+	j                   .while_cond__get_tid_1
+.while_block__get_tid_1:
+	addiw               a0, a0, -1
+.while_cond__get_tid_1:
+	blez                a0, .return__get_tid_1
+	mv                  a2, a0
+	slliw               a2, a2, 2
+	add                 a2, a1, a2
+	lw                  a2, 0(a2)                                                      # a2 = tids[a0]
+	bne                 a2, a7, .while_block__get_tid_1
+.return__get_tid_1:
+# 返回 a0 ，这里 a0 就是循环变量
+	addiw               a0, a0, -1                                                     # 下标 与 tid 正好差一位
+
+	ld                  ra,56(sp)
+	.cfi_restore        1
+	ld                  s0,48(sp)
+	.cfi_restore        8
+	ld                  s1,40(sp)
+	.cfi_restore        9
+	addi                sp,sp,64
+	.cfi_def_cfa_offset 0
+	jr                  ra
+
 .L5:
 	lla                 a5,STACK_SIZE.0
 	ld                  a4,0(a5)
@@ -122,12 +161,18 @@ thrd_create:
 	li                  a5,20254720
 	addi                a5,a5,-256
 	sw                  a5,-44(s0)                                                     # flag
+
 	lla                 a5,tids
-	lw                  a5,0(a5)
-	addiw               a5,a5,1
-	sext.w              a4,a5
-	lla                 a5,tids
-	sw                  a4,0(a5)                                                       # ++tids[0]
+	li                  t0, 1
+	amoadd.w            a1, t0, (a5)                                                   # 获取 a5 原来的值
+	addiw               a1, a1, 1
+	sw                  a1, -48(s0)
+# lw a5,0(a5)
+# addiw a5,a5,1
+# sext.w a4,a5
+# lla a5,tids
+# sw a4,0(a5) # ++tids[0]
+
 	lla                 a5,tids
 	lw                  a5,0(a5)
 	sw                  a5,-48(s0)                                                     # cnt
@@ -176,8 +221,8 @@ thrd_create:
 	li                  a5,0                                                           # a5 = NULL
 	mv                  a4,a3                                                          # a4 = &tids[cnt]
 # lla a3, tids # 传入参数是 tids
-# lw a3, -48(s0)
-	li                  a3, 0                                                          # a3 = 0
+# li a3, 0 # a3 = 0
+	lw                  a3, -48(s0)                                                    # a3 = 传入子线程的 id
 # li a3,0 # a3 = NULL
 	ld                  a1,-40(s0)                                                     # a1 = stack_top
 	lla                 a0,son_leave                                                   # a0 = son_leave
@@ -185,9 +230,12 @@ thrd_create:
 	j                   .main_leave
 
 .main_leave:
-	lw                  a5,-48(s0)
-	mv                  a0, a5
-	addi                a0, a0, -1
+# lw a5,-48(s0)
+# mv a0, a5
+# addi a0, a0, -1
+# call gettid@plt # 这个时候 a0 是返回值
+# call __get_tid@plt
+	li                  a0, 0                                                          # main thread 总是 == 0
 	ld                  ra,56(sp)
 	.cfi_restore        1
 	ld                  s0,48(sp)
@@ -210,6 +258,7 @@ thrd_create:
 	addi                sp,sp,64
 	.cfi_def_cfa_offset 0
 	jr                  ra
+
 	.cfi_endproc
 .LFE7:
 	.size               thrd_create, .-thrd_create

@@ -11,8 +11,7 @@ int main()
     a[id] = a[id] * 2;
     thrd_join();
 
-    printf("%d, %d, %d\n", a[0], a[1], a[2]);
-    // assert(a[0] + a[1] + a[2] == 7);
+    printf("%d, %d, %d\n", a[0], a[1], a[2]); // 2, 4, 3
 
     return 0;
 }

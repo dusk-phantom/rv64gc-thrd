@@ -7,7 +7,10 @@
 __get_tid:
 .LFB6__get_tid:
 	.cfi_startproc
-# mv a7, a0 # a7 = gettid()
+	mv             a7, a0                        # a7 = gettid()
+	addi           sp, sp, -8
+	sd             ra, 0(sp)
+	call           gettid@plt
 	mv             a7, a0
 .while_init__get_tid:
 	lla            a1, tids                      # a1 = tids 基址
@@ -24,6 +27,9 @@ __get_tid:
 	bne            a2, a7, .while_block__get_tid
 .return__get_tid:
 # 返回 a0 ，这里 a0 就是循环变量
+	ld             ra, 0(sp)
+	addi           sp, sp, 8
+	addiw          a0, a0, -1                    # 下标 与 tid 正好差一位
 	jr             ra
 	.cfi_endproc
 .LFE6__get_tid:

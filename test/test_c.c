@@ -32,7 +32,7 @@ int main(void)
     int ret1 = thrd_create();
     if (ret1 == -1) { // 错误
         return -1;
-    } else if (ret1 == 0) { // 子线程
+    } else if (ret1 == 0) { // 主线程
 
         arr[0] = 20;
 
@@ -42,9 +42,25 @@ int main(void)
             mtx_unlock(mtx1);
         }
 
-        // printf("child thread tid=%d\n", gettid());
+        int ret2 = thrd_create();
+        if (ret2 == -1) { // 错误
+            return -1;
+        } else if (ret2 == 0) { // 主线程
+            for (int i = 0; i < 100; i++) {
+                mtx_lock(mtx1);
+                sum++;
+                mtx_unlock(mtx1);
+            }
+        } else {
+            // 另一个子线程
+            for (int i = 0; i < 100; i++) {
+                mtx_lock(mtx1);
+                sum++;
+                mtx_unlock(mtx1);
+            }
+        }
 
-    } else { // 父线程
+    } else { // 子线程 tid = 1
 
         arr[1] = 100;
 
@@ -57,14 +73,19 @@ int main(void)
         int ret2 = thrd_create();
         if (ret2 == -1) { // 错误
             return -1;
-        } else if (ret2 == 0) {
+        } else if (ret2 == 1) { // 子线程
             for (int i = 0; i < 100; i++) {
                 mtx_lock(mtx1);
                 sum++;
                 mtx_unlock(mtx1);
             }
         } else {
-            // 父线程，啥也不做
+            // 理论上不会执行这一段
+            for (int i = 0; i < 100; i++) {
+                mtx_lock(mtx1);
+                sum++;
+                mtx_unlock(mtx1);
+            }
         }
     }
 

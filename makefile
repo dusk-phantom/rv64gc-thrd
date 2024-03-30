@@ -43,3 +43,6 @@ clean:
 
 # 防止make误解释文件名
 .PHONY: all clean
+
+debug:
+	gdb 
