@@ -1,5 +1,7 @@
 // FIXME 这种也是未定义行为
 
+#define _GNU_SOURCE
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -77,7 +77,7 @@
 
 int thrd_join(void)
 {
-    if (syscall(SYS_gettid) == tids[1]) { // 主线程
+    if (gettid() == tids[1]) { // 主线程
         // wait
 
         __atomic_sub_fetch(&tids[0], 1, __ATOMIC_SEQ_CST); // 主线程自己 --
