@@ -1,7 +1,5 @@
 #pragma once
 
-
-#define _GNU_SOURCE
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +9,6 @@
 #include <sched.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-
 
 #define THREADS_NUM 20
 #define TMP_MEM_SIZE 1600

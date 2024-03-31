@@ -10,7 +10,8 @@ __get_tid:
 	mv             a7, a0                        # a7 = gettid()
 	addi           sp, sp, -8
 	sd             ra, 0(sp)
-	call           gettid@plt
+	li             a0,178
+	call           syscall@plt
 	mv             a7, a0
 .while_init__get_tid:
 	lla            a1, tids                      # a1 = tids 基址
