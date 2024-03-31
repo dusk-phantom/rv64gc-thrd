@@ -37,12 +37,13 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(@D)
 	$(AS) $(CFLAGS) -c $< -o $@
 
-# 清理编译生成的文件
-clean:
-	rm -rf $(BUILD_DIR)
 
 # 防止make误解释文件名
 .PHONY: all clean
+
+# 清理编译生成的文件
+clean:
+	rm -rf $(BUILD_DIR)
 
 debug:
 	gdb 

@@ -7,8 +7,12 @@ if [ "$#" -ne 1 ]; then
 fi
 
 TEST_NAME=$1
-TEST_FILE="test/test_${TEST_NAME}.c"
-OUTPUT_FILE="build/test_${TEST_NAME}"
+TEST_FILE="test/${TEST_NAME}.c"
+OUTPUT_FILE="build/test/${TEST_NAME}"
+
+if [ ! -d "build/test" ]; then
+    mkdir -p build/test
+fi
 
 # 检查测试文件是否存在
 if [ ! -f "${TEST_FILE}" ]; then

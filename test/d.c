@@ -9,12 +9,16 @@
  *
  */
 
+#define _GNU_SOURCE
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <syscall.h>
 #include <unistd.h>
+
+#include "thrd.h"
 
 int main(void)
 {

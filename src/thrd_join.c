@@ -1,21 +1,11 @@
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <linux/futex.h>
-#include <linux/sched.h> /* Definition of struct clone_args */
-#include <sched.h>
-#include <sys/syscall.h>
-#include <unistd.h>
 
 #include "thrd.h"
 
 /* ---------- ---------- 全局变量 ---------- ---------- */
 
-#define THREADS_num 20
-extern pid_t tids[THREADS_num];
-// extern uint32_t futexs[THREADS_num];
-extern char tmp_mem[1600];
+// extern pid_t tids[THREADS_NUM];
+// // extern uint32_t futexs[THREADS_num];
+// extern char tmp_mem[TMP_MEM_SIZE];
 
 /* ---------- ---------- 线程相关函数 ---------- ---------- */
 
@@ -25,7 +15,7 @@ volatile uint32_t futex_var = 0;
 
 int thrd_join(void)
 {
-    if (syscall(SYS_gettid) == tids[1]) { // 主线程
+    if (gettid() == tids[1]) { // 主线程
         // wait
 
         while (__atomic_load_n(&tids[0], __ATOMIC_SEQ_CST) > 1) { // 陷入等待
@@ -39,6 +29,7 @@ int thrd_join(void)
         for (int i = 2; tmp_mem[i << 8]; i++) {
             stack = *(uint64_t*)((char*)tmp_mem + (i << 8) + 112);
             free((void*)stack);
+            *(uint64_t*)((char*)tmp_mem + (i << 8) + 112) = NULL; // 释放后清空, 以免重复释放
         }
 
     } else {

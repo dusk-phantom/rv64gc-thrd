@@ -1,5 +1,24 @@
 #pragma once
 
+
+#define _GNU_SOURCE
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <linux/futex.h>
+#include <linux/sched.h> /* Definition of struct clone_args */
+#include <sched.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+
+#define THREADS_NUM 20
+#define TMP_MEM_SIZE 1600
+
+extern pid_t tids[THREADS_NUM];
+extern char tmp_mem[TMP_MEM_SIZE];
+
 /**
  * @brief 创建一个线程并且返回线程的编号(主线程返回0,其他线程返回非0正值),线程中的函数自当前之后下一行开始执行,如果创建线程失败返回-1
  *
