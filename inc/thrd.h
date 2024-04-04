@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 #define THREADS_NUM 20
-#define TMP_MEM_SIZE ((1 << 8) * 20)
+#define TMP_MEM_SIZE ((1 << 8) * (THREADS_NUM + 1))
 
 extern pid_t tids[THREADS_NUM + 1]; // 因为  tids[0] 存放的是可以创建线程的数量
 extern char tmp_mem[TMP_MEM_SIZE];
