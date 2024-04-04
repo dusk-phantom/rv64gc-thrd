@@ -16,7 +16,7 @@
 #include <syscall.h>
 #include <unistd.h>
 
-// #include "thrd.h"
+#include "thrd.h"
 
 int main(void)
 {

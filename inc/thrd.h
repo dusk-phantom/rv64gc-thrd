@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #define THREADS_NUM 20
-#define TMP_MEM_SIZE 1600
+#define TMP_MEM_SIZE (128 * 20)
 
 extern pid_t tids[THREADS_NUM];
 extern char tmp_mem[TMP_MEM_SIZE];
@@ -22,7 +22,20 @@ extern char tmp_mem[TMP_MEM_SIZE];
  * @return int
  */
 #include <sys/types.h>
-int thrd_create();
+
+int _thrd_create(long stackSize);
+
+static inline __attribute__((always_inline)) int thrd_create(void)
+{
+    long s0_sp_difference;
+    __asm__ volatile(
+        "sub %0, s0, sp\n" // 计算s0与sp的差值
+        : "=r"(s0_sp_difference) // 输出到变量
+        :
+        : "memory");
+    // printf("s0 - sp = %d\n", s0_sp_difference);
+    return _thrd_create(s0_sp_difference);
+}
 
 /**
  * @brief 等待之前所有创建的子线程结束, 在这之后只有主线程继续执行, 失败返回-1

@@ -20,6 +20,15 @@
 
 int main(void)
 {
+
+    int s0_sp_difference;
+    __asm__ volatile(
+        "sub %0, s0, sp\n" // 计算s0与sp的差值
+        : "=r"(s0_sp_difference) // 输出到变量
+        :
+        : "memory");
+    printf("s0 - sp = %d\n", s0_sp_difference);
+
     int arr[2];
     // fork();
 

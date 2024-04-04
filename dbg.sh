@@ -21,8 +21,8 @@ if [ ! -f "${TEST_FILE}" ]; then
 fi
 
 # 编译测试文件，并链接到 libthrd.so
-gcc -Iinc ${TEST_FILE} -S -o ${OUTPUT_FILE}.s
-gcc -Wall -g -Iinc -o ${OUTPUT_FILE} ${OUTPUT_FILE}.s -Lbuild -lthrd -Wl,-rpath,build
+# gcc -Wall -g -Iinc -o ${OUTPUT_FILE} ${TEST_FILE} -Lbuild -lthrd -Wl,-rpath,build
+gcc -g -Iinc ${TEST_FILE} src/_thrd_create.s src/mtx.c src/thrd_join.c src/thrd.c -o ${OUTPUT_FILE}
 
 # 检查编译是否成功
 if [ "$?" -ne 0 ]; then
@@ -32,8 +32,7 @@ else
     echo "Compilation successful. Output file: ${OUTPUT_FILE}"
 fi
 
-./${OUTPUT_FILE}
+gdb -ex "file $OUTPUT_FILE" -ex "tui enable" -ex "break main"  -ex "run" -ex "set scheduler-locking on"
 
-echo "main output is $?"
 
 

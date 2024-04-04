@@ -14,27 +14,32 @@
 	.type               son_leave, @function
 son_leave:
 	.cfi_startproc
-# lla a0, tids
-# lw a0, 0(a0) # a0 = cnt
+	mv                  s8, a0                                                         # 保存一下 cnt 也就是 tid
+	mv                  s11, sp                                                        # s11 = son sp
 
-# 传入参数：a0 = cnt
-	slliw               a2, a0, 8
-	lla                 a1, tmp_mem
-	add                 a1, a1, a2                                                     # a1 = tids[cnt]
+	lla                 a0, tmp_mem
+	slliw               a2, s8, 8                                                      # cnt << 8
+	add                 a1, a0, a2                                                     # a1 = tmp_mem[cnt]
+	ld                  s10, 120(a1)                                                   # caller 栈大小 = tmp_mem[cnt][120]
+	sub                 sp, sp, s10                                                    # 准备复制
+	mv                  s9, a1                                                         # 暂存 s9 = tmp_mem[cnt]
+	ld                  s7, 8(a1)                                                      # s7 = s0' 也就是 caller 的 s0
+	sub                 s7, s7, s10                                                    # s7 = s7 - s10 得到 caller 的 sp
 
-	mv                  s1,a1                                                          # s1 = tids[cnt]
-	mv                  s0,a0                                                          # s0 = cnt
+.LB_copy_frame:
+	mv                  a0, sp
+	mv                  a1, s7
+	mv                  a2, s10
+	call                memcpy@plt                                                     # 浅拷贝 caller 的栈
 
-# memcpy(dest, src, n); 也就是 memcpy(sp, s0, 1024)
-	ld                  a1,104(a1)                                                     # 主线程的栈底
-	addi                sp,sp,-1024
-	mv                  a0,sp
-	li                  a2,1024
-	call                memcpy@plt
+	mv                  a7, s11                                                        # a7 看起来比较少用，son sp
+
+# 接下来应该是和 主线程一样了
 
 .LB_restore:
-	mv                  a1,s1                                                          # a1 = tids[cnt]
-	mv                  a0,s0                                                          # s0 = cnt
+	mv                  a1,s9                                                          # a1 = tmp_mem[cnt]
+	mv                  a0,s8                                                          # FIXME s0 = cnt 返回值，后面不要改了
+
 	ld                  s2,24(a1)
 	ld                  s3,32(a1)
 	ld                  s4,40(a1)
@@ -46,11 +51,11 @@ son_leave:
 	ld                  s10,88(a1)
 	ld                  s11,96(a1)
 
-	ld                  ra,0(a1)
+	ld                  ra, 0(a1)
 	.cfi_restore        1
-	ld                  s0,8(a1)
+	mv                  s0, a7                                                         # 恢复 s0
 	.cfi_restore        8
-	ld                  s1,16(a1)
+	ld                  s1, 16(a1)
 	.cfi_restore        9
 # li a0, 0 # 生成返回值
 # a0 这个时候没有动过，注意
@@ -59,12 +64,12 @@ son_leave:
 	.cfi_endproc
 	.size               son_leave, .-son_leave
 
-# ---------- ---------- thrd_create ---------- ----------
+# ---------- ---------- _thrd_create ---------- ----------
 
 	.align              1
-	.globl              thrd_create
-	.type               thrd_create, @function
-thrd_create:
+	.globl              _thrd_create
+	.type               _thrd_create, @function
+_thrd_create:
 .LFB7:
 	.cfi_startproc
 	addi                sp,sp,-64
@@ -72,6 +77,7 @@ thrd_create:
 	sd                  ra,56(sp)
 	sd                  s0,48(sp)
 	sd                  s1,40(sp)
+	sd                  a0, 32(sp)                                                     # FIXME a0 是传入的参数 = caller(s0-sp)
 	.cfi_offset         1, -8
 	.cfi_offset         8, -16
 	.cfi_offset         9, -24
@@ -108,7 +114,7 @@ thrd_create:
 # call syscall@plt
 	lw                  a5, -56(s0)                                                    # gettid
 # mv a5,a0
-	beq                 s1,a5,.L5                                                      # 如果是 子线程调用了 thrd_create
+	beq                 s1,a5,.L5                                                      # 如果是 子线程调用了 _thrd_create
 	j                   .LFB6__get_tid_1
 
 # j .main_leave # if tids[1] != gettid
@@ -182,7 +188,7 @@ thrd_create:
 	lw                  a0, -48(s0)                                                    # cnt
 	slliw               a0, a0, 8
 	add                 a1,a1,a0                                                       # tmp_mem[cnt]
-	ld                  ra, -8(s0)                                                     # r0
+	ld                  ra, -8(s0)                                                     # ra
 	sd                  ra,0(a1)
 	ld                  a0, -16(s0)                                                    # s0'
 	sd                  a0, 8(a1)
@@ -198,6 +204,9 @@ thrd_create:
 	sd                  s9,80(a1)
 	sd                  s10,88(a1)
 	sd                  s11,96(a1)
+
+	ld                  a0, -32(s0)                                                    # caller 的 s0 - sp 栈大小
+	sd                  a0, 120(a1)
 
 # addi a0, sp, 64 # 因为 s0 是栈底
 	mv                  a0, s0                                                         # 因为 s0 是栈底
@@ -261,7 +270,7 @@ thrd_create:
 
 	.cfi_endproc
 .LFE7:
-	.size               thrd_create, .-thrd_create
+	.size               _thrd_create, .-_thrd_create
 
 	.section            .rodata
 	.align              3

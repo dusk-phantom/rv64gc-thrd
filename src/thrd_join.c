@@ -1,11 +1,6 @@
 
 #include "thrd.h"
-
-/* ---------- ---------- 全局变量 ---------- ---------- */
-
-// extern pid_t tids[THREADS_NUM];
-// // extern uint32_t futexs[THREADS_num];
-// extern char tmp_mem[TMP_MEM_SIZE];
+#include <string.h>
 
 /* ---------- ---------- 线程相关函数 ---------- ---------- */
 
@@ -25,11 +20,13 @@ int thrd_join(void)
         // 释放 线程的栈空间
         // 注意一下，这个时候有一个问题：就是我已经不知道创建过多少个线程
         // 如果 tmp_mem[i << 8] != 0 说明曾经有过东西，释放！
-        uint64_t stack = 0;
         for (int i = 2; tmp_mem[i << 8]; i++) {
-            stack = *(uint64_t*)((char*)tmp_mem + (i << 8) + 112);
+            char* tmp = (char*)tmp_mem + (i << 8);
+            uint64_t stack = *(uint64_t*)(tmp + 112);
             free((void*)stack);
-            *(uint64_t*)((char*)tmp_mem + (i << 8) + 112) = NULL; // 释放后清空, 以免重复释放
+            memset(tmp, 0, 128); // 清空，以免影响循环判断条件
+            memset(tids, 0, sizeof(pid_t) * THREADS_NUM);
+            stack = 0; // stack = NULL
         }
 
     } else {
