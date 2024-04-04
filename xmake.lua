@@ -22,7 +22,7 @@ target("thrd")
         os.rmdir("build")
     end)
 
-	    -- 添加自定义debug配置（仅示例，需要根据实际调试工具自定义）
+    -- 添加自定义debug配置（仅示例，需要根据实际调试工具自定义）
     target("debug")
         on_run(function ()
             os.exec("gdb ./build/libthrd.so")
