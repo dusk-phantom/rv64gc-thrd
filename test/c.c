@@ -36,7 +36,7 @@ int main(void)
 
     int mtx1 = mtx_create();
 
-    int ret1 = thrd_create();
+    int ret1 = thrd_create(1);
     if (ret1 == -1) { // 错误
         return -1;
     } else if (ret1 == 0) { // 主线程
@@ -49,7 +49,7 @@ int main(void)
             mtx_unlock(mtx1);
         }
 
-        int ret2 = thrd_create();
+        int ret2 = thrd_create(1);
         if (ret2 == -1) { // 错误
             return -1;
         } else if (ret2 == 0) { // 主线程
@@ -77,7 +77,7 @@ int main(void)
             mtx_unlock(mtx1);
         }
 
-        int ret2 = thrd_create();
+        int ret2 = thrd_create(1);
         if (ret2 == -1) { // 错误
             return -1;
         } else if (ret2 == 1) { // 子线程

@@ -27,14 +27,12 @@ son_leave:
 	sub                 s7, s7, s10                                                    # s7 = s7 - s10 得到 caller 的 sp
 
 .LB_copy_frame:
-	mv                  a0, sp
-	mv                  a1, s7
-	mv                  a2, s10
+	mv                  a0, sp                                                         # dest
+	mv                  a1, s7                                                         # src
+	mv                  a2, s10                                                        # 复制这么多的字节
 	call                memcpy@plt                                                     # 浅拷贝 caller 的栈
 
 	mv                  a7, s11                                                        # a7 看起来比较少用，son sp
-
-# 接下来应该是和 主线程一样了
 
 .LB_restore:
 	mv                  a1,s9                                                          # a1 = tmp_mem[cnt]
@@ -77,87 +75,35 @@ _thrd_create:
 	sd                  ra,56(sp)
 	sd                  s0,48(sp)
 	sd                  s1,40(sp)
-	sd                  a0, 32(sp)                                                     # FIXME a0 是传入的参数 = caller(s0-sp)
+	sd                  a0, 32(sp)                                                     # a0 是传入的参数 = caller(s0-sp)
 	.cfi_offset         1, -8
 	.cfi_offset         8, -16
 	.cfi_offset         9, -24
 	addi                s0,sp,64
 	.cfi_def_cfa        8, 0
-	li                  a0,178
-	call                syscall@plt
-	sw                  a0, -56(s0)                                                    # gettid 的 临时变量
-	lla                 a5,tids
-	lw                  a5,0(a5)
-	bne                 a5,zero,.L4                                                    # if tids[0] == 0
-# li a0,178
-# call syscall@plt
-	lw                  a3, -56(s0)
-# mv a3,a0
-	lla                 a5,tids
-	lw                  a5,0(a5)
-	addiw               a5,a5,1
-	sext.w              a4,a5
-	lla                 a5,tids
-	sw                  a4,0(a5)
-	lla                 a5,tids
-	lw                  a5,0(a5)
-	sext.w              a4,a3
-	lla                 a3,tids
-	slli                a5,a5,2
-	add                 a5,a3,a5
-	sw                  a4,0(a5)
-.L4:
-	lla                 a5,tids
-	lw                  a5,4(a5)
-	mv                  s1,a5
-# li a0,178
-# call syscall@plt
-	lw                  a5, -56(s0)                                                    # gettid
-# mv a5,a0
-	beq                 s1,a5,.L5                                                      # 如果是 子线程调用了 _thrd_create
-	j                   .LFB6__get_tid_1
 
-# j .main_leave # if tids[1] != gettid
-.LFB6__get_tid_1:
-	mv                  a7, a5                                                         # 上面 a5 = syscall(gettid)
-.while_init__get_tid_1:
-	lla                 a1, tids                                                       # a1 = tids 基址
-	lw                  a0, 0(a1)                                                      # a0 = cnt
-	j                   .while_cond__get_tid_1
-.while_block__get_tid_1:
-	addiw               a0, a0, -1
-.while_cond__get_tid_1:
-	blez                a0, .return__get_tid_1
-	mv                  a2, a0
-	slliw               a2, a2, 2
-	add                 a2, a1, a2
-	lw                  a2, 0(a2)                                                      # a2 = tids[a0]
-	bne                 a2, a7, .while_block__get_tid_1
-.return__get_tid_1:
-# 返回 a0 ，这里 a0 就是循环变量
-	addiw               a0, a0, -1                                                     # 下标 与 tid 正好差一位
-
+.L5:
+	lla                 a5,STACK_SIZE.0
+	ld                  a4,0(a5)
+	addi                a5,s0,-64
+	mv                  a2,a4                                                          # s2 = stack_size
+	li                  a1,16                                                          # a1 = 16 (align)
+	mv                  a0,a5                                                          # a0 = a5 = &stack
+	call                posix_memalign@plt
+	ld                  a5,-64(s0)
+	bnez                a5, .L7                                                        # if stack != NULL
+	li                  a0, -1                                                         # fail
 	ld                  ra,56(sp)
 	.cfi_restore        1
 	ld                  s0,48(sp)
 	.cfi_restore        8
+	.cfi_def_cfa        2, 64
 	ld                  s1,40(sp)
 	.cfi_restore        9
 	addi                sp,sp,64
 	.cfi_def_cfa_offset 0
 	jr                  ra
 
-.L5:
-	lla                 a5,STACK_SIZE.0
-	ld                  a4,0(a5)
-	addi                a5,s0,-64
-	mv                  a2,a4
-	li                  a1,16
-	mv                  a0,a5
-	call                posix_memalign@plt
-	ld                  a5,-64(s0)
-	bne                 a5,zero,.L7                                                    # if stack != NULL
-	j                   .fail
 .L7:
 	ld                  a4,-64(s0)
 	lla                 a5,STACK_SIZE.0
@@ -168,20 +114,11 @@ _thrd_create:
 	addi                a5,a5,-256
 	sw                  a5,-44(s0)                                                     # flag
 
-	lla                 a5,tids
-	li                  t0, 1
-	amoadd.w            a1, t0, (a5)                                                   # 获取 a5 原来的值
-	addiw               a1, a1, 1
-	sw                  a1, -48(s0)
-# lw a5,0(a5)
-# addiw a5,a5,1
-# sext.w a4,a5
-# lla a5,tids
-# sw a4,0(a5) # ++tids[0]
-
-	lla                 a5,tids
-	lw                  a5,0(a5)
-	sw                  a5,-48(s0)                                                     # cnt
+	lla                 t1, tids
+	lw                  a5, 0(t1)
+	addiw               a5, a5, 1
+	sw                  a5, 0(t1)
+	sw                  a5, -48(s0)                                                    # cnt
 
 .LBB_backup:
 	lla                 a1, tmp_mem
@@ -220,48 +157,22 @@ _thrd_create:
 	slli                a4,a5,2
 	lla                 a5,tids
 	add                 a3,a4,a5
-# lw a5,-48(s0)
-# slli a4,a5,2
-# lla a5,futexs
-# add a5,a4,a5
 	lw                  a2,-44(s0)                                                     # a2 = flag
-# mv a6,a5 # a6 = futexs[cnt]
 	li                  a6, 0                                                          # a6 = NULL
 	li                  a5,0                                                           # a5 = NULL
-	mv                  a4,a3                                                          # a4 = &tids[cnt]
-# lla a3, tids # 传入参数是 tids
-# li a3, 0 # a3 = 0
-	lw                  a3, -48(s0)                                                    # a3 = 传入子线程的 id
-# li a3,0 # a3 = NULL
+	mv                  a4,a3                                                          # a4 = &tids[cnt] # 存放的是线程 tid
+	lw                  a3,-48(s0)                                                     # a3 = 传入子线程的 id
 	ld                  a1,-40(s0)                                                     # a1 = stack_top
 	lla                 a0,son_leave                                                   # a0 = son_leave
 	call                clone@plt                                                      # TODO 重点
 	j                   .main_leave
 
 .main_leave:
-# lw a5,-48(s0)
-# mv a0, a5
-# addi a0, a0, -1
-# call gettid@plt # 这个时候 a0 是返回值
-# call __get_tid@plt
 	li                  a0, 0                                                          # main thread 总是 == 0
 	ld                  ra,56(sp)
 	.cfi_restore        1
 	ld                  s0,48(sp)
 	.cfi_restore        8
-	ld                  s1,40(sp)
-	.cfi_restore        9
-	addi                sp,sp,64
-	.cfi_def_cfa_offset 0
-	jr                  ra
-
-.fail:
-	li                  a0, -1
-	ld                  ra,56(sp)
-	.cfi_restore        1
-	ld                  s0,48(sp)
-	.cfi_restore        8
-	.cfi_def_cfa        2, 64
 	ld                  s1,40(sp)
 	.cfi_restore        9
 	addi                sp,sp,64

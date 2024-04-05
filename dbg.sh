@@ -22,7 +22,7 @@ fi
 
 # 编译测试文件，并链接到 libthrd.so
 # gcc -Wall -g -Iinc -o ${OUTPUT_FILE} ${TEST_FILE} -Lbuild -lthrd -Wl,-rpath,build
-gcc -g -Iinc ${TEST_FILE} src/_thrd_create.s src/mtx.c src/thrd_join.c src/thrd.c -o ${OUTPUT_FILE}
+gcc -g -Iinc ${TEST_FILE} src/thrd_create.s src/_thrd_create.s src/mtx.c src/thrd_join.c src/thrd.c -o ${OUTPUT_FILE}
 
 # 检查编译是否成功
 if [ "$?" -ne 0 ]; then

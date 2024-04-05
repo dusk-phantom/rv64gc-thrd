@@ -15,12 +15,12 @@ int main()
     // printf("s0 - sp = %d\n", s0_sp_difference);
 
     int a[100] = { 1, 2, 3 };
-    // int* b = a;
+    int* b = a;
 
-    int id = thrd_create();
+    int id = thrd_create(1);
 
-    // b[id] = b[id] * 2;
-    a[id] = a[id] * 2;
+    b[id] = b[id] * 2;
+    // a[id] = a[id] * 2;
 
     thrd_join();
 

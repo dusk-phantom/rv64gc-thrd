@@ -22,13 +22,9 @@ int main(void)
 {
     int arr[10] = { 11, 13, 17, 19, 23, 0 };
 
-    int ret1 = thrd_create();
+    int ret1 = thrd_create(1);
 
-    // sleep(1);
-
-    int ret2 = thrd_create();
-
-    // sleep(1);
+    int ret2 = thrd_create(1);
 
     arr[ret1] = arr[ret1] * 5; // arr[1] 在这里 * 5^3
 

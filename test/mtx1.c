@@ -13,7 +13,7 @@ int main()
 
     int mtx = mtx_create();
 
-    int id = thrd_create();
+    int id = thrd_create(1);
     switch (id) {
     case -1:
         abort();

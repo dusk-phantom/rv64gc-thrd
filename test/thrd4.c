@@ -1,7 +1,6 @@
 // 用来测试线程栈
 
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "thrd.h"
 
@@ -19,19 +18,10 @@ int main(void)
     // 并行,每个线程计算一个fib
     int count[4] = { 10, 12, 13, 14 };
     int expects[4] = { fib(count[0]), fib(count[1]), fib(count[2]), fib(count[3]) };
-    int results[4];
-    int id;
-    for (int i = 0; i < 4; i++) {
-        // FIXME 没有等所有的线程创建完
-        id = thrd_create();
-        if (id < 0) {
-            // 异常情况
-            exit(-1);
-        } else if (id != 0) {
-            break;
-        }
-        // 主线程继续创建线程
-    }
+    int _results[4];
+    int* results = _results;
+
+    int id = thrd_create(4);
 
     // 并行区域
     results[id] = fib(count[id]);
