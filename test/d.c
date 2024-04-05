@@ -20,15 +20,13 @@
 
 int main(void)
 {
-    int arr[10] = { 11, 13, 17, 19, 23, 0 };
+    int _arr[10] = { 11, 13, 17, 19, 23, 0 };
 
-    int ret1 = thrd_create();
+    int* arr = _arr;
 
-    // sleep(1);
+    int ret1 = thrd_create(1);
 
-    int ret2 = thrd_create();
-
-    // sleep(1);
+    int ret2 = thrd_create(1);
 
     arr[ret1] = arr[ret1] * 5; // arr[1] 在这里 * 5^3
 
@@ -36,12 +34,7 @@ int main(void)
 
     thrd_join();
 
-    // 这里就很有趣了：有两种结果：4 16 6 4 （这是正确的）
-    // 还有一种是：16 8 3 4 （这是错误的），很明显，应该要使用：
-
     for (int i = 0; i < 10; i++) {
         printf("%d\n", arr[i]);
     }
-
-    // destroy_mtxs();
 }

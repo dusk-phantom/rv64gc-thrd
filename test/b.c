@@ -1,13 +1,4 @@
-/**
- * @file main.c
- * @author your name (you@domain.com)
- * @brief
- * @version 0.1
- * @date 2024-03-26
- *
- * @copyright Copyright (c) 2024
- *
- */
+// FIXME 这种操作是未定义行为
 
 #include <stdint.h>
 #include <stdio.h>

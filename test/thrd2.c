@@ -17,24 +17,15 @@ void test_parrallel_region()
     int* sum = tmp;
 
     // 创建并行区域
-    int id;
     // 创建3个线程 (然后包括主线程就有4个线程了)
-    for (int i = 0; i < 3; i++) {
-        id = thrd_create();
-        if (id < 0) {
-            // 异常情况
-            exit(-1);
-        } else if (id != 0) {
-            break;
-        }
-        // 主线程继续创建线程
-    }
+    int id = thrd_create(3);
     // 每个线程执行对应 二维数组的一个维度的求和
     for (int i = 0; i < 3; i++) {
         sum[id] += a[id][i];
     }
     // 等待所有线程执行完毕
     thrd_join();
+
     // 累加所有线程的求和结果
     int total = 0;
     for (int i = 0; i < 4; i++) {

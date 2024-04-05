@@ -20,28 +20,22 @@
 
 int main(void)
 {
-    int arr[2];
     // fork();
 
-    int sum = 0;
+    int _sum = 0;
+    int* sum = &_sum;
 
     int mtx1 = mtx_create();
 
-    int ret1 = thrd_create();
+    thrd_create(1);
 
-    // for (int i = 0; i < 100; i++) {
-    //     mtx_lock(mtx1);
-    //     sum++;
-    //     mtx_unlock(mtx1);
-    // }
-
-    mtx_lock(mtx1);
     for (int i = 0; i < 100; i++) {
-        sum++;
+        mtx_lock(mtx1);
+        (*sum)++;
+        mtx_unlock(mtx1);
     }
-    mtx_unlock(mtx1);
 
     thrd_join();
 
-    printf("sum=%d\n", sum);
+    printf("sum=%d\n", _sum);
 }

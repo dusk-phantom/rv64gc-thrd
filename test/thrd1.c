@@ -6,25 +6,17 @@
 
 int main()
 {
-    // int s0_sp_difference;
-    // __asm__ volatile(
-    //     "sub %0, s0, sp\n" // 计算s0与sp的差值
-    //     : "=r"(s0_sp_difference) // 输出到变量
-    //     :
-    //     : "memory");
-    // printf("s0 - sp = %d\n", s0_sp_difference);
 
-    int a[100] = { 1, 2, 3 };
-    int* b = a;
+    int _a[10] = { 1, 2, 3 };
+    int* a = _a;
 
-    int id = thrd_create(1);
+    int id = thrd_create(2);
 
-    b[id] = b[id] * 2;
-    // a[id] = a[id] * 2;
+    a[id] = a[id] * 2;
 
     thrd_join();
 
-    printf("%d, %d, %d\n", a[0], a[1], a[2]); // 2, 4, 3
+    printf("%d, %d, %d\n", a[0], a[1], a[2]); // 2, 4, 6
 
     return 0;
 }

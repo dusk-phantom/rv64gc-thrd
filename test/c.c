@@ -1,13 +1,4 @@
-/**
- * @file main.c
- * @author your name (you@domain.com)
- * @brief
- * @version 0.1
- * @date 2024-03-26
- *
- * @copyright Copyright (c) 2024
- *
- */
+// FIXME 这种也是未定义行为
 
 #include <stdint.h>
 #include <stdio.h>
@@ -29,7 +20,8 @@ int main(void)
         : "memory");
     printf("s0 - sp = %d\n", s0_sp_difference);
 
-    int arr[2];
+    int _arr[2];
+    int* arr = _arr;
     // fork();
 
     int sum = 0;
