@@ -83,7 +83,7 @@ _thrd_create:
 	.cfi_def_cfa        8, 0
 
 .L5:
-	lla                 a5,STACK_SIZE.0
+	lla                 a5,STACK_SIZE
 	ld                  a4,0(a5)
 	addi                a5,s0,-64
 	mv                  a2,a4                                                          # s2 = stack_size
@@ -106,7 +106,7 @@ _thrd_create:
 
 .L7:
 	ld                  a4,-64(s0)
-	lla                 a5,STACK_SIZE.0
+	lla                 a5,STACK_SIZE
 	ld                  a5,0(a5)
 	add                 a5,a4,a5
 	sd                  a5,-40(s0)                                                     # top
@@ -182,13 +182,6 @@ _thrd_create:
 	.cfi_endproc
 .LFE7:
 	.size               _thrd_create, .-_thrd_create
-
-	.section            .rodata
-	.align              3
-	.type               STACK_SIZE.0, @object
-	.size               STACK_SIZE.0, 8
-STACK_SIZE.0:
-	.dword              65536
 
 .ident "GCC:
 	(Debian             13.2.0-1) 13.2.0"
