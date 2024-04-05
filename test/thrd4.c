@@ -21,7 +21,7 @@ int main(void)
     int _results[4];
     int* results = _results;
 
-    int id = thrd_create(4);
+    int id = thrd_create(3);
 
     // 并行区域
     results[id] = fib(count[id]);

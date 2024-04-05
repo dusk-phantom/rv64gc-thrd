@@ -188,7 +188,7 @@ _thrd_create:
 	.type               STACK_SIZE.0, @object
 	.size               STACK_SIZE.0, 8
 STACK_SIZE.0:
-	.dword              65536
+	.dword              1048576
 
 .ident "GCC:
 	(Debian             13.2.0-1) 13.2.0"
