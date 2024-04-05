@@ -93,7 +93,6 @@ int thrd_join(void)
             uint64_t stack = *(uint64_t*)(tmp + 112);
             free((void*)stack);
             memset(tmp, 0, 128); // 清空，以免影响循环判断条件
-            memset(tids, 0, sizeof(pid_t) * THREADS_NUM);
             stack = 0; // stack = NULL
         }
 

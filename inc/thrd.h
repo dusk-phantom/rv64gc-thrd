@@ -17,6 +17,8 @@
 extern pid_t tids[THREADS_NUM + 1]; // 因为  tids[0] 存放的是可以创建线程的数量
 extern char tmp_mem[TMP_MEM_SIZE];
 
+extern const uint64_t STACK_SIZE;
+
 /**
  * @brief 创建一个线程并且返回线程的编号(主线程返回0,其他线程返回非0正值),线程中的函数自当前之后下一行开始执行,如果创建线程失败返回-1
  *
