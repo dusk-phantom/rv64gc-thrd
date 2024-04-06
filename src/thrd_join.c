@@ -1,7 +1,5 @@
 
 #include "thrd.h"
-#include <stdlib.h>
-#include <string.h>
 
 /* ---------- ---------- 线程相关函数 ---------- ---------- */
 
@@ -77,7 +75,7 @@
 
 int thrd_join(void)
 {
-    if (gettid() == tids[1]) { // 主线程
+    if (syscall(SYS_gettid) == tids[1]) { // 主线程
         // wait
 
         __atomic_sub_fetch(&tids[0], 1, __ATOMIC_SEQ_CST); // 主线程自己 --

@@ -1,8 +1,5 @@
 // 测试多次使用创建并行区域的情况
 
-#include <assert.h>
-#include <stdio.h>
-
 #include "thrd.h"
 
 void test_parrallel_region()

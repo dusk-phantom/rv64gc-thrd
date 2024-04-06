@@ -1,9 +1,12 @@
 #pragma once
 
+#include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <linux/futex.h>
 #include <linux/sched.h> /* Definition of struct clone_args */

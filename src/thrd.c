@@ -1,8 +1,5 @@
 #include "thrd.h"
 
-#include <stdint.h>
-#include <sys/types.h>
-
 #define THREADS_NUM 20
 
 pid_t tids[THREADS_NUM + 1];

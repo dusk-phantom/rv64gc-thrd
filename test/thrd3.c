@@ -1,7 +1,3 @@
-#include <assert.h>
-#include <memory.h>
-#include <stdio.h>
-
 #include "thrd.h"
 
 // 矩阵并行计算过程1, 并行求和

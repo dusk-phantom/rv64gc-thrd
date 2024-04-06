@@ -1,11 +1,5 @@
 // FIXME 这种操作是未定义行为
 
-#include <stdint.h>
-#include <stdio.h>
-
-#include <syscall.h>
-#include <unistd.h>
-
 #include "thrd.h"
 
 int main(void)

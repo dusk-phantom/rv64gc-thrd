@@ -11,15 +11,6 @@
 
 #define _GNU_SOURCE
 
-#include <err.h>
-#include <linux/futex.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-
 #include "thrd.h"
 
 /**
