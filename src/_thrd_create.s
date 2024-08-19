@@ -129,7 +129,7 @@ _thrd_create:
 	sd                  ra,0(a1)
 	ld                  a0, -16(s0)                                                    # s0'
 	sd                  a0, 8(a1)
-	ld                  a0, -24(a1)                                                    # s1
+	ld                  a0, -24(s0)                                                    # s1
 	sd                  a0,16(a1)
 	sd                  s2,24(a1)
 	sd                  s3,32(a1)
