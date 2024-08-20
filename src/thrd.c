@@ -5,4 +5,4 @@
 pid_t tids[THREADS_NUM + 1];
 char tmp_mem[TMP_MEM_SIZE];
 
-const uint64_t STACK_SIZE = 1024 * 1024;
+const uint64_t STACK_SIZE = 512 * 1024 * 1024;
