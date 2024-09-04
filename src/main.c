@@ -7,7 +7,7 @@ void func()
     thrd_create(1);
     void* sp;
     void* s0;
-    asm volatile(
+    __asm__ volatile(
         "mv %0, sp\n"
         "mv %1, s0\n"
         : "=r"(sp), "=r"(s0)

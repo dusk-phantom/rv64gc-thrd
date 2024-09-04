@@ -1,11 +1,12 @@
 #include "thrd.h"
+#include "ctx.h"
 
 tid_t thrd_create(uint64_t num)
 {
     if (gettid() != getpid()) { // 判断是否是主线程
         // 子线程返回 tid
         uint64_t tp;
-        asm volatile(
+        __asm__ volatile(
             "mv %0, tp\n"
             : "=r"(tp)
             :
@@ -23,14 +24,12 @@ tid_t thrd_create(uint64_t num)
     uint64_t main_sp = (uint64_t)__builtin_frame_address(0);
 
     uint64_t self_s0, self_sp;
-    asm volatile(
+    __asm__ volatile(
         "mv %0, s0\n"
         "mv %1, sp\n"
         : "=r"(self_s0), "=r"(self_sp)
         :
         :);
-    printf("thrd_create: main_sp=%p, main_s0=%p\n", main_sp, main_s0);
-    printf("thrd_create: self_sp=%p, self_s0=%p\n", self_sp, self_s0);
 
     /* ---------- 创建线程 ---------- */
     tid_t tid = __thrd_create(main_sp, main_s0);

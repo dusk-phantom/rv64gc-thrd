@@ -24,8 +24,6 @@ typedef uint64_t tid_t;
 
 extern uint64_t cnt; // 线程的个数
 
-tid_t __thrd_create(uint64_t main_sp, uint64_t main_s0);
-
 /**
  * @brief
  *
