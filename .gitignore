@@ -3,13 +3,11 @@
 build/
 xmake
 
-.*
-!.gitignore
-
 *.out
 *.o
+.direnv
+.vscode
+backup
 
 # MacOS Cache
 .DS_Store
-
-

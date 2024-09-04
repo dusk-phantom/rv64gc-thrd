@@ -1,38 +1,37 @@
-#pragma once
+#ifndef __THRD_H__
+#define __THRD_H__
 
-#include <assert.h>
-#include <limits.h>
-#include <stdbool.h>
+#define _GNU_SOURCE
+
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <linux/futex.h>
-#include <linux/sched.h> /* Definition of struct clone_args */
-#include <sched.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <sched.h>
+#include <linux/sched.h>
 
-#define THREADS_NUM 8
-#define TMP_MEM_SIZE ((1 << 8) * (THREADS_NUM + 1))
+#define MAX_THREAD_NUM 10 // 至多有 10 个线程
+#define STACK_SIZE 65536 // 栈的大小
 
-extern volatile pid_t tids[THREADS_NUM + 1]; // 因为  tids[0] 存放的是可以创建线程的数量
-extern volatile char tmp_mem[TMP_MEM_SIZE];
+#define gettid() syscall(SYS_gettid)
+#define getpid() syscall(SYS_getpid)
 
-extern volatile const uint64_t STACK_SIZE;
+typedef uint64_t tid_t;
+
+#define FLAGS (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | CLONE_PARENT_SETTID)
+
+extern uint64_t cnt; // 线程的个数
+
+tid_t __thrd_create(uint64_t main_sp, uint64_t main_s0);
 
 /**
- * @brief 创建一个线程并且返回线程的编号(主线程返回0,其他线程返回非0正值),线程中的函数自当前之后下一行开始执行,如果创建线程失败返回-1
+ * @brief
  *
- * @return int
+ * @param num
+ * @return uint64_t 线程 id, 主线程是 0
  */
+tid_t thrd_create(uint64_t num);
 
-int thrd_create(volatile long num);
-
-/**
- * @brief 等待之前所有创建的子线程结束, 在这之后只有主线程继续执行, 失败返回-1
- *
- * @return int
- */
-int thrd_join();
+#endif //  __THRD_H__

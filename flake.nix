@@ -13,6 +13,8 @@
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
             qemu
+            clang
+            llvm
             (with pkgsCross.riscv64; [ buildPackages.gcc ])
           ];
 
