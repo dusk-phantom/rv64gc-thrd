@@ -1,8 +1,6 @@
 #include "thrd.h"
 #include "ctx.h"
 
-#define CLONE_ARGS(ARGS) ((clone_args_t*)ARGS)
-
 int son(void* _)
 {
     __asm__ volatile(

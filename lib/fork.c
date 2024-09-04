@@ -1,6 +1,8 @@
 #include "thrd.h"
 #include "ctx.h"
 
+static volatile uint32_t mtx = 0;
+
 tid_t thrd_create(uint64_t num)
 {
     if (gettid() != getpid()) { // 判断是否是主线程
@@ -96,18 +98,21 @@ tid_t thrd_create(uint64_t num)
 
     uint64_t main_sp = (uint64_t)__builtin_frame_address(0); // 0: self_s0 == main_sp
     uint64_t main_size = (uint64_t)__builtin_frame_address(1) - main_sp; // 1: main_s0
-    crea.ra = (uint64_t)__builtin_return_address(0);
+
+    live = 1; // 初始化线程数
 
     /* ---------- 创建线程 ---------- */
-    tid_t tid = __thrd_create(&crea, main_sp, main_size);
-    switch (tid) {
-    case 0:
-        // 主线程的出口
-        break;
-
-    default:
-        // 子线程的出口
-        break;
+    while (live < num + 1) {
+        tid_t tid = __thrd_create(&crea, main_sp, main_size);
+        if (gettid() != getpid()) {
+            while (1) {
+                if (live == num + 1) {
+                    return tid;
+                }
+            }
+        }
+        live++;
     }
+
     return 0;
 }
