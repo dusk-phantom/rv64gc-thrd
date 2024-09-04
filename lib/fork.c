@@ -18,21 +18,88 @@ tid_t thrd_create(uint64_t num)
         return 0; // 返回主线程的 tid
     }
 
-    // 1 thrd_create's s0 == main's sp
-    // 0 main's s0
-    uint64_t main_s0 = (uint64_t)__builtin_frame_address(1);
-    uint64_t main_sp = (uint64_t)__builtin_frame_address(0);
-
-    uint64_t self_s0, self_sp;
+    /* ---------- 保存上下文 callee saved ---------- */
+    // 这些 callee saved 是 thrd_create 调用 __thrd_create 时的
+    create_t crea;
+    // 注意编译选项, 保存的是: thrd_create 中的 callee saved 寄存器
     __asm__ volatile(
-        "mv %0, s0\n"
-        "mv %1, sp\n"
-        : "=r"(self_s0), "=r"(self_sp)
+        "mv %0, s1\n"
+        : "=r"(crea.s1)
         :
         :);
 
+    __asm__ volatile(
+        "mv %0, s2\n"
+        : "=r"(crea.s2)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s3\n"
+        : "=r"(crea.s3)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s4\n"
+        : "=r"(crea.s4)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s5\n"
+        : "=r"(crea.s5)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s6\n"
+        : "=r"(crea.s6)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s7\n"
+        : "=r"(crea.s7)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s8\n"
+        : "=r"(crea.s8)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s8\n"
+        : "=r"(crea.s8)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s9\n"
+        : "=r"(crea.s9)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s10\n"
+        : "=r"(crea.s10)
+        :
+        :);
+
+    __asm__ volatile(
+        "mv %0, s11\n"
+        : "=r"(crea.s11)
+        :
+        :);
+
+    uint64_t main_sp = (uint64_t)__builtin_frame_address(0); // 0: self_s0 == main_sp
+    uint64_t main_size = (uint64_t)__builtin_frame_address(1) - main_sp; // 1: main_s0
+    crea.ra = (uint64_t)__builtin_return_address(0);
+
     /* ---------- 创建线程 ---------- */
-    tid_t tid = __thrd_create(main_sp, main_s0);
+    tid_t tid = __thrd_create(&crea, main_sp, main_size);
     switch (tid) {
     case 0:
         // 主线程的出口

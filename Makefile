@@ -5,7 +5,7 @@ FFIXED = -ffixed-x9 -ffixed-x18 -ffixed-x19 -ffixed-x20 -ffixed-x21 -ffixed-x22 
 
 # fork 是不能使用一些 callee saved 的
 fork: clone
-	clang -o build/fork.o -c lib/fork.c $(CFLAGS)
+	clang -o build/fork.o -c lib/fork.c $(CFLAGS) $(FFIXED)
 
 clone:
 	clang -o build/clone.o -c lib/clone.c $(CFLAGS) $(FFIXED)
