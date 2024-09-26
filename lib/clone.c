@@ -2,10 +2,16 @@
 #include "ctx.h"
 
 // 只有主线程能进入这个函数, 子线程创建出来以后, 不用管这个函数, 直接返回到 thrd_create
-tid_t __thrd_create(create_t* crea, uint64_t main_sp, uint64_t main_size)
+tid_t __thrd_create(create_t* crea, uint64_t main_sp, uint64_t main_size, tid_t tid /* 指定: 新创建出来的线程的 id */)
 {
 
-    volatile tid_t id = live; // 担心被优化掉
+    uint64_t thrd_create_next;
+    __asm__ volatile(
+        "mv %0, ra\n"
+        : "=r"(thrd_create_next)
+        :
+        :);
+
     /* ---------- 分配栈 ---------- */
     void* lo;
     if (posix_memalign(&lo, 16, STACK_SIZE) != 0) {
@@ -13,7 +19,7 @@ tid_t __thrd_create(create_t* crea, uint64_t main_sp, uint64_t main_size)
     }
     uint64_t hi = (uint64_t)lo + STACK_SIZE;
 
-    stack_alloc[id] = (uint64_t)lo;
+    stack_alloc[tid] = (uint64_t)lo;
 
     /* ---------- main ---------- */
     memcpy((void*)(hi - main_size), (void*)(main_sp), main_size);
@@ -25,10 +31,11 @@ tid_t __thrd_create(create_t* crea, uint64_t main_sp, uint64_t main_size)
 
     clone_t args = {
         .crea = crea,
-        .tid = id,
-        .thrd_create_next = (uint64_t)__builtin_return_address(0),
+        // .thrd_create_next = (uint64_t)__builtin_return_address(0),
+        .thrd_create_next = thrd_create_next,
         .chld_thrd_s0 = hi - main_size,
         .chld_thrd_sp = hi - main_size - thrd_create_size,
+        .tid = tid,
     };
 
     __asm__ volatile(

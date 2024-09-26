@@ -23,6 +23,9 @@ run: thrd
 	clang src/main.c build/fork.o build/clone.o build/thrd.o build/son.o build/join.o -o build/main $(CFLAGS)
 	./build/main
 	
+gdb: build/main
+	gdbtui build/main
+	
 clean:
 	rm -rf build/*
 	

@@ -6,7 +6,6 @@
 
 int main()
 {
-
     int _a[10] = { 1, 2, 3 };
     int* a = _a;
 
