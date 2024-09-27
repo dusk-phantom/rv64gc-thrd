@@ -7,7 +7,6 @@
 #include <string.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <sched.h>
 #include <linux/sched.h>
 

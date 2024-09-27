@@ -19,27 +19,16 @@ tid_t thrd_create(uint64_t num) {
   /* ---------- 保存上下文 callee saved ---------- */
   static create_t crea;
   __asm__ volatile("mv %0, s1\n" : "=r"(crea.s1) : :);
-
   __asm__ volatile("mv %0, s2\n" : "=r"(crea.s2) : :);
-
   __asm__ volatile("mv %0, s3\n" : "=r"(crea.s3) : :);
-
   __asm__ volatile("mv %0, s4\n" : "=r"(crea.s4) : :);
-
   __asm__ volatile("mv %0, s5\n" : "=r"(crea.s5) : :);
-
   __asm__ volatile("mv %0, s6\n" : "=r"(crea.s6) : :);
-
   __asm__ volatile("mv %0, s7\n" : "=r"(crea.s7) : :);
-
   __asm__ volatile("mv %0, s8\n" : "=r"(crea.s8) : :);
-
   __asm__ volatile("mv %0, s8\n" : "=r"(crea.s8) : :);
-
   __asm__ volatile("mv %0, s9\n" : "=r"(crea.s9) : :);
-
   __asm__ volatile("mv %0, s10\n" : "=r"(crea.s10) : :);
-
   __asm__ volatile("mv %0, s11\n" : "=r"(crea.s11) : :);
 
   uint64_t main_sp =
