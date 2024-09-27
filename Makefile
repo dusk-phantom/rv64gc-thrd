@@ -4,6 +4,9 @@ CFLAGS += -g
 # IMPORTANT: compiling the fork.c should not use the callee saved regs
 FFIXED = -ffixed-x9 -ffixed-x18 -ffixed-x19 -ffixed-x20 -ffixed-x21 -ffixed-x22 -ffixed-x23 -ffixed-x24 -ffixed-x25 -ffixed-x26 -ffixed-x27
 
+lib: fork join clone son thrd
+	ar rcs libthrd.a build/fork.o build/clone.o build/thrd.o build/son.o build/join.o
+
 thrd: fork join
 	clang lib/thrd.c -o build/thrd.o -c $(CFLAGS)
 
@@ -28,7 +31,7 @@ c: thrd
 	clang test/c.c build/fork.o build/clone.o build/thrd.o build/son.o build/join.o -o build/main $(CFLAGS) -o ./build/c
 	./build/c
 
-c: thrd 
+d: thrd 
 	clang test/d.c build/fork.o build/clone.o build/thrd.o build/son.o build/join.o -o build/main $(CFLAGS) -o ./build/d
 	./build/d
 
