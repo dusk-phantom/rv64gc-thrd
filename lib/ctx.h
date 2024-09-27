@@ -26,21 +26,19 @@ typedef struct {
 } create_t;
 
 typedef struct {
-  create_t *crea;            // -> 0
+  const create_t *crea;      // -> 0
   uint64_t thrd_create_next; // 返回地址 -> 8
   uint64_t chld_thrd_s0;     // -> 16
   uint64_t chld_thrd_sp;     // -> 24
   tid_t tid;                 // -> 32
+  void *__alloc;             // -> 40
 } clone_t;
 
 // 子线程的入口地址
 int son(void *) __attribute__((naked));
 
-tid_t __thrd_create(create_t *crea, uint64_t main_sp, uint64_t main_size,
-                    tid_t tid);
-
-extern uint64_t stack_alloc[];
-extern tid_t tids[];
+tid_t __thrd_create(const create_t *crea, uint64_t main_sp, uint64_t main_size,
+                    uint64_t main_ra, tid_t tid);
 
 #define MAX_THREAD_NUM 10 // 至多有 10 个线程
 #define STACK_SIZE 65536  // 栈的大小
@@ -53,6 +51,8 @@ extern tid_t tids[];
    CLONE_SYSVSEM | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID |                 \
    CLONE_PARENT_SETTID)
 
-extern uint64_t live; // 线程的个数
+extern uint64_t live_son; // 线程的个数
+
+extern clone_t args_vec[MAX_THREAD_NUM];
 
 #endif // __CTX_H__

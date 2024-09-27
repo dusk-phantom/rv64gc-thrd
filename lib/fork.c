@@ -2,6 +2,9 @@
 #include "ctx.h"
 
 tid_t thrd_create(uint64_t num) {
+  uint64_t ra;
+  __asm__ volatile("mv %0, ra\n" : "=r"(ra) : :);
+
   if (gettid() != getpid()) { // 判断是否是主线程
     // 子线程返回 tid
     uint64_t tp;
@@ -14,9 +17,7 @@ tid_t thrd_create(uint64_t num) {
   }
 
   /* ---------- 保存上下文 callee saved ---------- */
-  // 这些 callee saved 是 thrd_create 调用 __thrd_create 时的
-  create_t crea;
-  // 注意编译选项, 保存的是: thrd_create 中的 callee saved 寄存器
+  static create_t crea;
   __asm__ volatile("mv %0, s1\n" : "=r"(crea.s1) : :);
 
   __asm__ volatile("mv %0, s2\n" : "=r"(crea.s2) : :);
@@ -46,20 +47,12 @@ tid_t thrd_create(uint64_t num) {
   uint64_t main_size =
       (uint64_t)__builtin_frame_address(1) - main_sp; // 1: main_s0
 
-  live = num + 1; // 初始化线程数
+  live_son = num; // 初始化线程数
 
   /* ---------- 创建线程 ---------- */
-  for (int i = 0; i < num; i++) {
-    tid_t tid = __thrd_create(&crea, main_sp, main_size, i + 1);
-    switch (tid) {
-    case 0: // 父线程
-      /* code */
-      break;
-
-    default: // 子线程
-      return tid;
-      break;
-    }
+  for (int i = 1; i <= num; i++) {
+    __thrd_create(&crea, main_sp, main_size, ra,
+                  i); // 子线程直接返回到 main 了
   }
 
   return 0;

@@ -4,12 +4,12 @@
 
 // int main() {
 
-//   int _a[10] = {1, 2, 3};
+//   int _a[10] = {2, 3, 5};
 //   int *a = _a;
 
 //   int id = thrd_create(2);
 
-//   fprintf(stderr, "id=%d\n", id);
+//   // fprintf(stderr, "id=%d\n", id);
 
 //   a[id] = a[id] * 2;
 
@@ -55,6 +55,8 @@ int main(void) {
 
   // 并行区域
   results[id] = fib(count[id]);
+
+  // fprintf(stderr, "id=%d\n", id);
 
   // 等待所有线程执行完毕
   thrd_join();

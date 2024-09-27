@@ -24,7 +24,7 @@ run: thrd
 	./build/main
 	
 gdb: build/main
-	gdbtui build/main
+	gdb build/main
 	
 clean:
 	rm -rf build/*
