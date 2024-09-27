@@ -11,3 +11,5 @@ backup
 
 # MacOS Cache
 .DS_Store
+
+.gdb_history

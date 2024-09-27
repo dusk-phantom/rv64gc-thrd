@@ -50,7 +50,7 @@ tid_t __thrd_create(const create_t *crea, uint64_t main_sp, uint64_t main_size,
    CLONE_SYSVSEM | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID |                 \
    CLONE_PARENT_SETTID)
 
-extern uint64_t live_son; // 线程的个数
+extern volatile uint64_t live_son; // 线程的个数
 
 extern clone_t args_vec[MAX_THREAD_NUM];
 
