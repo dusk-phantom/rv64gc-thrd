@@ -1,5 +1,9 @@
 # README
 
+## warning
+
+不能使用 gcc, 要使用 clang, 可能是 gcc 对栈有一定的保护机制, 没法通过 \_\_builtin 来知道栈帧的位置(使用 gcc 会段错误)
+
 ## 用途
 
 用于实现自动并行化
@@ -7,10 +11,8 @@
 ## Quick Start
 
 ```bash
-# 编译动态库
-make
-# 执行测试,如下命令测试./test/thrd1.c
-./test.sh thrd1
+# 请看 test/test4.c 和 makefile
+make test4
 ```
 
 ## 未定义行为
@@ -55,7 +57,6 @@ thrd_join();
 - [ ] c 不通过（同上）
 - [ ] d 不通过（未定义行为，错误示范）
 
-- [x] mtx1 通过
 - [x] thrd1 通过
 - [x] thrd2 通过（范例）
 - [x] thrd3 通过（范例）
@@ -63,5 +64,5 @@ thrd_join();
 
 ## TODO
 
-- [ ] 简化 thrd_create 的实现, 其实只需要 clone 指向的函数用 asm 实现就行了
-- [ ] 不使用记录线程 id 的数组, 打算使用 tp(x4) 来记录线程的地址, 这是符合语义的
+- [x] 简化 thrd_create 的实现, 其实只需要 clone 指向的函数用 asm 实现就行了
+- [x] 不使用记录线程 id 的数组, 打算使用 tp(x4) 来记录线程的地址, 这是符合语义的
