@@ -31,17 +31,14 @@ tid_t thrd_create(uint64_t num) {
   __asm__ volatile("mv %0, s10\n" : "=r"(crea.s10) : :);
   __asm__ volatile("mv %0, s11\n" : "=r"(crea.s11) : :);
 
-  uint64_t main_sp =
-      (uint64_t)__builtin_frame_address(0); // 0: self_s0 == main_sp
-  uint64_t main_size =
-      (uint64_t)__builtin_frame_address(1) - main_sp; // 1: main_s0
+  uint64_t main_sp = (uint64_t)__builtin_frame_address(0); // 0: self_s0 == main_sp
+  uint64_t main_size = (uint64_t)__builtin_frame_address(1) - main_sp; // 1: main_s0
 
   live_son = num; // 初始化线程数
 
   /* ---------- 创建线程 ---------- */
   for (int i = 1; i <= num; i++) {
-    __thrd_create(&crea, main_sp, main_size, ra,
-                  i); // 子线程直接返回到 main 了
+    __thrd_create(&crea, main_sp, main_size, ra, i); // 子线程直接返回到 main 了
   }
 
   return 0;

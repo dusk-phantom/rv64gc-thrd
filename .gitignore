@@ -1,15 +1,4 @@
-# Xmake cache
-.xmake/
-build/
-xmake
-
-*.out
-*.o
+build
 .direnv
-.vscode
-backup
-
-# MacOS Cache
-.DS_Store
-
-.gdb_history
+.cache
+compile_commands.json

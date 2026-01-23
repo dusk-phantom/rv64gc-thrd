@@ -41,6 +41,7 @@
 
             # QEMU 用于运行 RISC-V 程序
             pkgs.qemu
+            pkgs.bear
 
             # 调试工具
             pkgs.gdb

@@ -1,64 +1,70 @@
+# ============================================================
 # RISC-V 64位交叉编译配置
-TARGET = riscv64-linux-gnu
-CC = clang --target=$(TARGET) --sysroot=$(RISCV_SYSROOT) -resource-dir $(CLANG_RESOURCE_DIR)
-# 使用 RISC-V GCC 进行链接（避免 sysroot 路径问题）
-LD = riscv64-unknown-linux-gnu-gcc
-AR = llvm-ar
-QEMU = qemu-riscv64 -L $(RISCV_SYSROOT)
+# ============================================================
 
-CFLAGS += -I inc
-CFLAGS += -g -O2
+TARGET  := riscv64-linux-gnu
+CC      := clang --target=$(TARGET) --sysroot=$(RISCV_SYSROOT) -resource-dir $(CLANG_RESOURCE_DIR)
+LD      := riscv64-unknown-linux-gnu-gcc  # 使用 GCC 链接（避免 sysroot 路径问题）
+AR      := llvm-ar
+QEMU    := qemu-riscv64 -L $(RISCV_SYSROOT)
 
-# IMPORTANT: compiling the fork.c should not use the callee saved regs
-FFIXED = -ffixed-x9 -ffixed-x18 -ffixed-x19 -ffixed-x20 -ffixed-x21 -ffixed-x22 -ffixed-x23 -ffixed-x24 -ffixed-x25 -ffixed-x26 -ffixed-x27
+CFLAGS  := -I inc -g -O2
 
-lib: fork join clone son thrd
-	$(AR) rcs libthrd.a build/fork.o build/clone.o build/thrd.o build/son.o build/join.o
+# fork.c 编译时禁止使用 callee-saved 寄存器（s1-s11）
+FFIXED  := $(addprefix -ffixed-,x9 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27)
 
-thrd: fork join
-	$(CC) lib/thrd.c -o build/thrd.o -c $(CFLAGS)
+# ============================================================
+# 目录和文件
+# ============================================================
 
-# fork 是不能使用一些 callee saved 的
-fork: clone
-	$(CC) -o build/fork.o -c lib/fork.c $(CFLAGS) $(FFIXED)
+BUILD_DIR := build
+LIB_SRCS  := son clone fork join thrd
+LIB_OBJS  := $(addprefix $(BUILD_DIR)/,$(addsuffix .o,$(LIB_SRCS)))
+LIB_OUT   := $(BUILD_DIR)/libthrd.a
 
-clone: son
-	$(CC) -o build/clone.o -c lib/clone.c $(CFLAGS)
+# ============================================================
+# 主要目标
+# ============================================================
 
-son:
-	$(CC) lib/son.c -o build/son.o -c -I inc $(CFLAGS)
+.PHONY: lib clean all
 
-join:
-	$(CC) lib/join.c -o build/join.o -c -g $(CFLAGS)
+all: lib
 
-b: lib
-	$(LD) test/b.c ./libthrd.a -I inc -o ./build/b -g
-	$(QEMU) ./build/b
-	
-c: lib 
-	$(LD) test/c.c ./libthrd.a -I inc -o ./build/c -g
-	$(QEMU) ./build/c
+lib: $(LIB_OUT)
 
-d: lib 
-	$(LD) test/d.c ./libthrd.a -I inc -o ./build/d -g
-	$(QEMU) ./build/d
+$(LIB_OUT): $(LIB_OBJS)
+	$(AR) rcs $@ $^
 
-test1: lib
-	$(LD) test/test1.c ./libthrd.a -I inc -o ./build/test1 -g
-	$(QEMU) ./build/test1
+# ============================================================
+# 库对象文件编译规则
+# ============================================================
 
-test2: lib
-	$(LD) test/test2.c ./libthrd.a -I inc -o ./build/test2 -g
-	$(QEMU) ./build/test2
+$(BUILD_DIR)/%.o: lib/%.c | $(BUILD_DIR)
+	$(CC) -c $< -o $@ $(CFLAGS)
 
-test3: lib
-	$(LD) test/test3.c ./libthrd.a -I inc -o ./build/test3 -g
-	$(QEMU) ./build/test3
+# fork.c 需要特殊的编译选项
+$(BUILD_DIR)/fork.o: lib/fork.c | $(BUILD_DIR)
+	$(CC) -c $< -o $@ $(CFLAGS) $(FFIXED)
 
-test4: lib
-	$(LD) test/test4.c ./libthrd.a -I inc -o ./build/test4 -g
-	$(QEMU) ./build/test4
+$(BUILD_DIR):
+	mkdir -p $@
+
+# ============================================================
+# 测试目标
+# ============================================================
+
+TESTS := test1 test2 test3 test4 b c d
+
+.PHONY: $(TESTS)
+
+# 模式规则：编译并运行测试
+$(TESTS): %: lib | $(BUILD_DIR)
+	$(LD) test/$*.c $(LIB_OUT) -I inc -o $(BUILD_DIR)/$* -g
+	$(QEMU) $(BUILD_DIR)/$*
+
+# ============================================================
+# 清理
+# ============================================================
 
 clean:
-	rm -rf build/* ./libthrd.a
-	
+	rm -rf $(BUILD_DIR)
