@@ -53,7 +53,7 @@ $(BUILD_DIR):
 # 测试目标
 # ============================================================
 
-TESTS := test1 test2 test3 test4 b c d
+TESTS := test1 test2 test3 test4 test5 test6 test7 test8 b c d
 
 .PHONY: $(TESTS)
 
