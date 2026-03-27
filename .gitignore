@@ -1,4 +1,5 @@
 build
+builddir
 .direnv
 .cache
 compile_commands.json

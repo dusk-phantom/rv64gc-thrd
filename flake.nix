@@ -13,10 +13,8 @@
         riscv64Pkgs = pkgs.pkgsCross.riscv64;
         llvmPkgs = pkgs.llvmPackages_18;
 
-        # RISC-V GCC（用于获取 libgcc 等运行时库）
         riscvGcc = riscv64Pkgs.stdenv.cc;
 
-        # 构建完整的 sysroot 目录（包含 libgcc_s）
         riscvSysroot = pkgs.symlinkJoin {
           name = "riscv64-sysroot";
           paths = [
@@ -27,6 +25,29 @@
             riscvGcc.cc.lib  # libgcc_s.so
           ];
         };
+
+        gccLibDir = "${riscvGcc.cc}/lib/gcc/riscv64-unknown-linux-gnu/${riscvGcc.cc.version}";
+        gccRuntimeDir = "${riscvGcc.cc.lib}/lib";
+        clangResourceDir = "${llvmPkgs.clang-unwrapped.lib}/lib/clang/18";
+
+        # meson 交叉编译配置文件（所有 Nix store 路径在求值时确定）
+        mesonCrossFile = pkgs.writeText "riscv64-cross.ini" ''
+          [binaries]
+          c = ['${llvmPkgs.clang-unwrapped}/bin/clang', '--target=riscv64-linux-gnu', '--sysroot=${riscvSysroot}', '-resource-dir', '${clangResourceDir}']
+          c_ld = '${llvmPkgs.lld}/bin/ld.lld'
+          ar = '${llvmPkgs.llvm}/bin/llvm-ar'
+          strip = '${llvmPkgs.llvm}/bin/llvm-strip'
+          exe_wrapper = ['${pkgs.qemu-user}/bin/qemu-riscv64', '-L', '${riscvSysroot}']
+
+          [built-in options]
+          c_link_args = ['-Wl,--sysroot=/', '--rtlib=libgcc', '-B${gccLibDir}', '-L${gccLibDir}', '-L${gccRuntimeDir}']
+
+          [host_machine]
+          system = 'linux'
+          cpu_family = 'riscv64'
+          cpu = 'riscv64'
+          endian = 'little'
+        '';
       in {
         devShells.default = pkgs.mkShell {
           buildInputs = [
@@ -39,28 +60,26 @@
             # RISC-V GCC（提供 libgcc、crtbegin 等）
             riscvGcc
 
-            # QEMU 用于运行 RISC-V 程序
-            pkgs.qemu
+            # QEMU user-mode 用于运行 RISC-V 程序
+            pkgs.qemu-user
             pkgs.bear
+
+            # 构建系统
+            pkgs.meson
+            pkgs.ninja
 
             # 调试工具
             pkgs.gdb
           ];
 
-          # 设置路径
-          RISCV_SYSROOT = "${riscvSysroot}";
-          # clang 内置头文件路径（stddef.h 等）
-          CLANG_RESOURCE_DIR = "${llvmPkgs.clang-unwrapped.lib}/lib/clang/18";
-          # GCC 运行时库路径（crtbegin.o 等）
-          RISCV_GCC_LIB = "${riscvGcc.cc}/lib/gcc/riscv64-unknown-linux-gnu/${riscvGcc.cc.version}";
-          # libgcc_s.so 路径
-          RISCV_GCC_LIBDIR = "${riscvGcc.cc.lib}/lib";
+          MESON_CROSS_FILE = "${mesonCrossFile}";
 
           shellHook = ''
             echo "rv64gc-thrd RISC-V 开发环境已加载"
             echo ""
-            echo "交叉编译: make lib"
-            echo "运行测试: make test4"
+            echo "初始化:   meson setup builddir --cross-file \$MESON_CROSS_FILE"
+            echo "编译库:   ninja -C builddir"
+            echo "运行测试: ninja -C builddir test"
           '';
         };
       });
